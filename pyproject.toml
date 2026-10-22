@@ -1,0 +1,14 @@
+[project]
+name = "hoverboard-mini"
+version = "0.0.1"
+description = "Interdisziplinaere Entwicklung eines elektrischen Luftkissen-Boards (Phase 0)"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+# ab Phase 3/4 vorgesehen (noch nicht verwendet): numpy, scipy, matplotlib, cadquery
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["calculations"]
