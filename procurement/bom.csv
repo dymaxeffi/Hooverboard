@@ -1,0 +1,14 @@
+id,gruppe,bezeichnung,technische_anforderungen,hersteller_modell,bezugsquelle,stueckzahl,einzelpreis_chf,gesamtpreis_chf,gewicht_kg,lieferbarkeit,alternativen,fertigen_oder_kaufen,status
+A0-01,A0 Pruefstand,Plattform Sperrholz,800x500 mm; 9-12 mm; Eckradius 120 mm,offen,Baumarkt CH (Phase 1 recherchieren),1,offen,offen,offen,offen,Pappelsperrholz,kaufen + zuschneiden,zu recherchieren
+A0-02,A0 Pruefstand,Geblaese 230 V,Laubblaeser mit Blasfunktion; Leistung und Duese anschliessbar,offen,offen,1,offen,offen,offen,offen,Akku-Laubblaeser; Industriegeblaese,kaufen,zu recherchieren
+A0-03,A0 Pruefstand,Geblaeseadapter + Einlassgitter,PETG; passend zu A0-02,Eigenbau,H2S Druck,1,offen,offen,offen,eigen,–,fertigen,nach Wahl A0-02
+A0-04,A0 Pruefstand,Schuerzenmaterial,luftdicht; reissfest; nicht chlorhaltig falls gelasert,offen,offen,2 m2,offen,offen,offen,offen,Ripstop beschichtet; PE-Plane,kaufen,zu recherchieren
+A0-05,A0 Pruefstand,Ballast Wasserkanister,verschliessbar; 10 l,offen,offen,6,offen,offen,offen,offen,Sandsaecke,kaufen,zu recherchieren
+A0-06,A0 Pruefstand,Spanngurte,Ladungssicherung,offen,offen,4,offen,offen,offen,offen,–,kaufen,zu recherchieren
+A0-07,A0 Pruefstand,U-Rohr-Manometer,transparenter Schlauch 6-8 mm; 2 m; Skala,offen,offen,1,offen,offen,offen,offen,Differenzdrucksensor,kaufen,zu recherchieren
+A0-08,A0 Pruefstand,Energiekostenmessgeraet,230 V; Wirkleistung,offen,offen,1,offen,offen,offen,offen,–,kaufen,zu recherchieren
+A0-09,A0 Pruefstand,Fluegelrad-Anemometer,0.5-30 m/s,offen,offen,1,offen,offen,offen,offen,Prandtl-Rohr,kaufen,zu recherchieren
+A0-10,A0 Pruefstand,Federwaage/Kraftmesser,0-100 N,offen,offen,1,offen,offen,offen,offen,Kofferwaage,kaufen,zu recherchieren
+A0-11,A0 Pruefstand,Schallpegelmesser,Klasse 2 dB(A),offen,offen,1,offen,offen,offen,offen,kalibrierte App,kaufen,zu recherchieren
+A0-12,A0 Pruefstand,PRCD/FI-Zwischenstecker,30 mA,offen,offen,1,offen,offen,offen,offen,FI in Hausinstallation,kaufen,zu recherchieren
+A0-13,A0 Pruefstand,Blendenplatten Kennlinie,Sperrholz 3 mm; Durchmesser gestuft,Eigenbau,H2S Laser,6,offen,offen,offen,eigen,Druck PETG,fertigen,nach Phase-1-Auslegung
