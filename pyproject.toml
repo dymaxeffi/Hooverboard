@@ -7,7 +7,8 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-# ab Phase 3/4 vorgesehen (noch nicht verwendet): numpy, scipy, matplotlib, cadquery
+cad = ["cadquery>=2.4", "shapely>=2.0", "ezdxf>=1.1", "matplotlib>=3.7"]
+# ab Phase 3 vorgesehen: numpy, scipy
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -5,3 +5,6 @@ __pycache__/
 venv/
 *.egg-info/
 .DS_Store
+
+# CAD: Baugruppen-STEP ist gross und jederzeit mit cad/build_all.py regenerierbar
+cad/assemblies/*.step
