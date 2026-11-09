@@ -30,7 +30,7 @@ FILAMENT = "Bambu PETG HF @BBL H2S"
 BED = "Textured PEI Plate"
 BED_CENTER = (170.0, 160.0)  # H2S: 340 x 320 mm
 
-# name, STL, Prozess-Systemprofil, Abweichungen vom Prozessprofil
+# name, STL, Prozess-Systemprofil, Abweichungen vom Prozessprofil[, Aufteilung]
 JOBS = [
     ("mixerli_v2.0_insert_M4_through", "mixerli_v2.0_insert_M4_through.stl",
      "0.20mm Standard @BBL H2S",
@@ -38,6 +38,10 @@ JOBS = [
     ("mixerli_v2.0_insert_M4_thread", "mixerli_v2.0_insert_M4_thread.stl",
      "0.12mm High Quality @BBL H2S",
      {"wall_loops": "4", "sparse_infill_density": "25%"}),
+    ("mixerli_v2.0_sleeves_M4", "mixerli_v2.0_sleeves_M4.stl",
+     "0.20mm Standard @BBL H2S",
+     {"wall_loops": "4", "sparse_infill_density": "25%"},
+     (2, 20.0)),  # 4 Hülsen einzeln, 2 x 2 im 20-mm-Raster
 ]
 
 
@@ -100,7 +104,7 @@ def project_config(idx, process, overrides):
     return cfg
 
 
-def mesh_xml(mesh):
+def mesh_xml(mesh, oid):
     v = "\n".join(f'     <vertex x="{x:.9g}" y="{y:.9g}" z="{z:.9g}"/>' for x, y, z in mesh.vertices)
     t = "\n".join(f'     <triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in mesh.faces)
     return (
@@ -109,13 +113,25 @@ def mesh_xml(mesh):
         'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" '
         'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" requiredextensions="p">\n'
         ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n <resources>\n'
-        '  <object id="1" p:UUID="00010000-81cb-4c03-9d28-80fed5dfa1dc" type="model">\n'
+        f'  <object id="{oid}" p:UUID="{oid:04x}0000-81cb-4c03-9d28-80fed5dfa1dc" type="model">\n'
         f'   <mesh>\n    <vertices>\n{v}\n    </vertices>\n    <triangles>\n{t}\n    </triangles>\n   </mesh>\n'
         '  </object>\n </resources>\n <build/>\n</model>\n')
 
 
-def main_model_xml(title, tx, ty, tz):
+def main_model_xml(title, objs):
+    """objs: Liste (name, mesh, (tx, ty, tz)); Netz i liegt in 3D/Objects/object_i.model."""
     today = date.today().isoformat()
+    n = len(objs)
+    res, items = [], []
+    for i, (_, _, (tx, ty, tz)) in enumerate(objs, 1):
+        res.append(f'''  <object id="{n + i}" p:UUID="{i:08x}-61cb-4c03-9d28-80fed5dfa1dc" type="model">
+   <components>
+    <component p:path="/3D/Objects/object_{i}.model" objectid="{i}" p:UUID="{i:04x}0000-b206-40ff-9872-83e8017abed1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>
+   </components>
+  </object>''')
+        items.append(f'  <item objectid="{n + i}" p:UUID="{n + i:08x}-b1ec-4553-aec9-835e5b724bb4" '
+                     f'transform="1 0 0 0 1 0 0 0 1 {tx:g} {ty:g} {tz:g}" printable="1"/>')
+    res, items = "\n".join(res), "\n".join(items)
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" requiredextensions="p">
  <metadata name="Application">BambuStudio-{APP_VERSION}</metadata>
@@ -126,23 +142,21 @@ def main_model_xml(title, tx, ty, tz):
  <metadata name="Thumbnail_Middle">/Metadata/plate_1.png</metadata>
  <metadata name="Thumbnail_Small">/Metadata/plate_1.png</metadata>
  <resources>
-  <object id="2" p:UUID="00000001-61cb-4c03-9d28-80fed5dfa1dc" type="model">
-   <components>
-    <component p:path="/3D/Objects/object_1.model" objectid="1" p:UUID="00010000-b206-40ff-9872-83e8017abed1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>
-   </components>
-  </object>
+{res}
  </resources>
  <build p:UUID="2c7c17d8-22b5-4d84-8835-1976022ea369">
-  <item objectid="2" p:UUID="00000002-b1ec-4553-aec9-835e5b724bb4" transform="1 0 0 0 1 0 0 0 1 {tx:g} {ty:g} {tz:g}" printable="1"/>
+{items}
  </build>
 </model>
 '''
 
 
-def model_settings_xml(name, faces, tx, ty, tz):
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<config>
-  <object id="2">
+def model_settings_xml(title, objs):
+    n = len(objs)
+    obj_xml, inst_xml, asm_xml = [], [], []
+    for i, (name, mesh, (tx, ty, tz)) in enumerate(objs, 1):
+        faces = len(mesh.faces)
+        obj_xml.append(f'''  <object id="{n + i}">
     <metadata key="name" value="{name}"/>
     <metadata key="extruder" value="1"/>
     <metadata face_count="{faces}"/>
@@ -151,23 +165,38 @@ def model_settings_xml(name, faces, tx, ty, tz):
       <metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
       <mesh_stat face_count="{faces}" edges_fixed="0" degenerate_facets="0" facets_removed="0" facets_reversed="0" backwards_edges="0"/>
     </part>
-  </object>
+  </object>''')
+        inst_xml.append(f'''    <model_instance>
+      <metadata key="object_id" value="{n + i}"/>
+      <metadata key="instance_id" value="0"/>
+      <metadata key="identify_id" value="{100 + i}"/>
+    </model_instance>''')
+        asm_xml.append(f'   <assemble_item object_id="{n + i}" instance_id="0" '
+                       f'transform="1 0 0 0 1 0 0 0 1 {tx:g} {ty:g} {tz:g}" offset="0 0 0" />')
+    obj_xml, inst_xml, asm_xml = "\n".join(obj_xml), "\n".join(inst_xml), "\n".join(asm_xml)
+    return f'''<?xml version="1.0" encoding="UTF-8"?>
+<config>
+{obj_xml}
   <plate>
     <metadata key="plater_id" value="1"/>
-    <metadata key="plater_name" value="{name}"/>
+    <metadata key="plater_name" value="{title}"/>
     <metadata key="locked" value="false"/>
     <metadata key="thumbnail_file" value="Metadata/plate_1.png"/>
-    <model_instance>
-      <metadata key="object_id" value="2"/>
-      <metadata key="instance_id" value="0"/>
-      <metadata key="identify_id" value="100"/>
-    </model_instance>
+{inst_xml}
   </plate>
   <assemble>
-   <assemble_item object_id="2" instance_id="0" transform="1 0 0 0 1 0 0 0 1 {tx:g} {ty:g} {tz:g}" offset="0 0 0" />
+{asm_xml}
   </assemble>
 </config>
 '''
+
+
+def model_rels_xml(n):
+    rels = "\n".join(f' <Relationship Target="/3D/Objects/object_{i}.model" Id="rel-{i}" '
+                     'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>' for i in range(1, n + 1))
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n'
+            f'{rels}\n</Relationships>\n')
 
 
 CONTENT_TYPES = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -182,11 +211,6 @@ RELS = '''<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
  <Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
  <Relationship Target="/Metadata/plate_1.png" Id="rel-2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"/>
-</Relationships>
-'''
-MODEL_RELS = '''<?xml version="1.0" encoding="UTF-8"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
- <Relationship Target="/3D/Objects/object_1.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
 </Relationships>
 '''
 SLICE_INFO = f'''<?xml version="1.0" encoding="UTF-8"?>
@@ -231,25 +255,41 @@ def thumbnail(mesh):
     return buf.getvalue()
 
 
-def build(idx, name, stl, process, overrides):
+def build(idx, name, stl, process, overrides, split=None):
+    """split=None: ein Objekt. split=(spalten, raster_mm): jeder Körper wird ein eigenes Objekt."""
     mesh = clean_mesh(os.path.join(HERE, "stl", stl))
     lo, hi = mesh.bounds
-    center = (lo + hi) / 2
-    mesh.apply_translation(-center)  # Objektursprung = Mitte des Bauteils
-    tx, ty, tz = BED_CENTER[0], BED_CENTER[1], (hi[2] - lo[2]) / 2  # flach auf dem Bett, mittig
+    if split:
+        bodies = sorted(mesh.split(only_watertight=True), key=lambda b: tuple(b.bounds[0]))
+        cols, pitch = split
+        rows = -(-len(bodies) // cols)
+        objs = []
+        for k, body in enumerate(bodies):
+            b_lo, b_hi = body.bounds
+            body.apply_translation(-(b_lo + b_hi) / 2)
+            r, c = divmod(k, cols)
+            objs.append((f"{name}_{k + 1}", body,
+                         (BED_CENTER[0] + (c - (cols - 1) / 2) * pitch,
+                          BED_CENTER[1] - (r - (rows - 1) / 2) * pitch,
+                          (b_hi[2] - b_lo[2]) / 2)))
+    else:
+        body = mesh.copy()
+        body.apply_translation(-(lo + hi) / 2)  # Objektursprung = Mitte des Bauteils
+        objs = [(name, body, (BED_CENTER[0], BED_CENTER[1], (hi[2] - lo[2]) / 2))]  # flach, Bettmitte
     cfg = project_config(idx, process, overrides)
     out = os.path.join(HERE, f"{name}_H2S_PETG.3mf")
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("[Content_Types].xml", CONTENT_TYPES)
         z.writestr("_rels/.rels", RELS)
-        z.writestr("3D/3dmodel.model", main_model_xml(name, tx, ty, tz))
-        z.writestr("3D/_rels/3dmodel.model.rels", MODEL_RELS)
-        z.writestr("3D/Objects/object_1.model", mesh_xml(mesh))
-        z.writestr("Metadata/model_settings.config", model_settings_xml(name, len(mesh.faces), tx, ty, tz))
+        z.writestr("3D/3dmodel.model", main_model_xml(name, objs))
+        z.writestr("3D/_rels/3dmodel.model.rels", model_rels_xml(len(objs)))
+        for i, (_, body, _) in enumerate(objs, 1):
+            z.writestr(f"3D/Objects/object_{i}.model", mesh_xml(body, i))
+        z.writestr("Metadata/model_settings.config", model_settings_xml(name, objs))
         z.writestr("Metadata/project_settings.config", json.dumps(cfg, indent=4, ensure_ascii=False))
         z.writestr("Metadata/slice_info.config", SLICE_INFO)
         z.writestr("Metadata/plate_1.png", thumbnail(mesh))
-    print(f"{out}: {len(mesh.faces)} Dreiecke, {hi - lo} mm, {mesh.volume / 1000:.1f} cm3")
+    print(f"{out}: {len(objs)} Objekt(e), {len(mesh.faces)} Dreiecke, {mesh.volume / 1000:.1f} cm3")
 
 
 if __name__ == "__main__":
