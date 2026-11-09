@@ -14,7 +14,7 @@ Dazu vier Distanzhülsen M4: außen ⌀ 7,5 mm, innen ⌀ 4,4 mm, 11,8 mm lang.
 | `stl/` | Original-STL | – |
 | `build_3mf.py` | erzeugt die .3mf neu | – |
 
-## Voreinstellungen (in beiden Projekten)
+## Voreinstellungen (in allen Projekten)
 
 - Drucker: **Bambu Lab H2S, 0.4-mm-Düse**
 - Filament: **Bambu PETG HF** (245 °C Düse, 70 °C Bett)
@@ -36,7 +36,6 @@ Grobe Schätzung ohne Slicer: Insert ca. 22–25 g, Hülsen zusammen ca. 2 g PET
 
 - **Hülsen:** stehen aufrecht, keine Stützen. Bei 1,55 mm Wandstärke druckt der Slicer sie praktisch massiv.
   Bambu Studio verlangsamt kleine Schichten automatisch, damit PETG abkühlt.
-
 - **Welche Variante?** Für häufiges Öffnen: Durchgangsloch + Mutter oder Gewindeeinsatz.
   Das gedruckte Gewinde reicht für wenige Montagen; Schraube beim ersten Mal langsam eindrehen,
   bei Bedarf mit M4-Gewindebohrer nachschneiden.
