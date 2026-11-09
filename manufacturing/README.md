@@ -1,5 +1,7 @@
 # Fertigung – Bambu Lab H2S Laser Full Combo
 
+**Druck-/Laserfertig für Bambu Studio:** [`jobs/JOBS.md`](jobs/JOBS.md) (5 Druckplatten .3mf, verschachtelte Laser-/Plotterbögen, Startparameter)
+
 **Mechanikmodule M01–M12 (+ Kalibrierung M00):** [`modules/README.md`](modules/README.md) · Verfahrensgrenzen, Materialien, Freigabe: [`process_limits.md`](process_limits.md)
 
 | Ordner | Inhalt |
@@ -7,6 +9,7 @@
 | `3d_print/mXX/` | STEP + STL je FDM-Teil, in Druckorientierung |
 | `laser_cut/mXX/` | DXF + SVG je Laserteil (Kerf-kompensiert) und verschachtelte Bögen `*_bogenN` |
 | `plotter/mXX/` | DXF + SVG je Plotterteil und Bögen (Stiftlinien in Ebene `SCORE`) |
+| `jobs/` | modulübergreifende Aufträge: Druckplatten `.3mf`, Laser-/Plotterbögen je Material |
 | `modules/` | automatisch erzeugte Moduldokumentation, Prüfprotokolle, Vorschaubilder |
 
 

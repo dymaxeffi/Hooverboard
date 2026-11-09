@@ -7,6 +7,7 @@ pip install cadquery shapely ezdxf matplotlib pytest
 python cad/build_all.py          # prüfen + alle Dateien erzeugen (~40 s)
 python cad/build_all.py --check  # nur prüfen
 python cad/render_previews.py    # Vorschaubilder manufacturing/modules/img/
+python cad/jobs.py               # Druckplatten (.3mf) + Laser-/Plotterbögen → manufacturing/jobs/
 python -m pytest                 # inkl. tests/test_cad_modules.py
 ```
 
