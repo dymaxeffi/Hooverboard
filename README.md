@@ -28,19 +28,24 @@ Annahmen sind in `calculations/hoverlib/parameters.py` als `ANN` markiert.
 | `research/` | Machbarkeit, Konzeptvergleich, Komponentenrecherche |
 | `calculations/` | `hoverlib` (einzige Formel- und Parameterquelle), Abschätzungsskripte, Ergebnisse |
 | `simulation/` | Dynamik- und Parametermodelle (ab Phase 3) |
-| `cad/` | CadQuery-Modelle, Baugruppen, Exporte (ab Phase 4) |
+| `cad/` | parametrische Mechanikmodule M00–M12 (CadQuery/shapely), Baugruppen; Board-CAD ab Phase 4 |
 | `electronics/`, `firmware/` | Elektronik und Steuerung (ab Phase 6) |
-| `manufacturing/` | Fertigung mit Bambu Lab H2S |
+| `manufacturing/` | Fertigung H2S: STEP/STL, DXF/SVG (Laser, Plotter), Moduldoku, Verfahrensgrenzen |
 | `procurement/` | Stückliste, Lieferanten |
 | `testing/` | Prüfpläne und Messdaten |
 | `safety/` | Gefahrenanalyse, rechtliche Fragen |
 | `documentation/` | Projektplan, Decision Log, Risiken, offene Fragen |
 | `tests/` | automatisierte Tests (pytest) |
 
+## Mechanikmodule (Bambu Lab H2S: FDM + 10-W-Laser + Schneidplotter)
+
+Zwölf hybride, parametrische Module – vor allem für den Prüfstand A0 – plus Kalibriercoupons: siehe [`manufacturing/modules/README.md`](manufacturing/modules/README.md). Konstruktion rechnerisch geprüft (Stufe B), **Fertigungsfreigabe offen** bis Kalibrierlauf M00 ([`manufacturing/process_limits.md`](manufacturing/process_limits.md)).
+
 ## Verwenden
 
 ```bash
-pip install pytest
+pip install pytest cadquery shapely ezdxf matplotlib
+python cad/build_all.py                    # Mechanikmodule prüfen + exportieren
 python calculations/phase0_estimate.py     # erzeugt calculations/results/phase0_estimate.md
 python calculations/hoverlib/decision.py   # Entscheidungsmatrix
 python -m pytest

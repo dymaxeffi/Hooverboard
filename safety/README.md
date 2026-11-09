@@ -40,6 +40,10 @@ Folgende Erlasse **könnten** relevant sein. Einordnung muss durch eine Fachpers
 
 SR-Nummern vor Verwendung an fedlex.admin.ch prüfen.
 
-## 4. Offene Sicherheitsnachweise
+## 4. Fertigung (H2S: Laser, Plotter, FDM)
+
+Gefährdungen und Massnahmen der Fertigung (Brand, Rauch, verbotene Lasermaterialien wie PVC, Messer, Emissionen) sowie die Materialpositivliste: `manufacturing/process_limits.md`. Das Fingerschutzgitter M10 ist konstruiert, seine Eignung nach ISO 13857 (inkl. Werte für Kinder) ist **nicht** nachgewiesen.
+
+## 5. Offene Sicherheitsnachweise
 
 Alle. Es liegt noch kein einziger Sicherheitsnachweis vor.

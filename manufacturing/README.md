@@ -1,6 +1,16 @@
 # Fertigung – Bambu Lab H2S Laser Full Combo
 
-## Bekannte Eckdaten (Stand Phase 0)
+**Mechanikmodule M01–M12 (+ Kalibrierung M00):** [`modules/README.md`](modules/README.md) · Verfahrensgrenzen, Materialien, Freigabe: [`process_limits.md`](process_limits.md)
+
+| Ordner | Inhalt |
+|---|---|
+| `3d_print/mXX/` | STEP + STL je FDM-Teil, in Druckorientierung |
+| `laser_cut/mXX/` | DXF + SVG je Laserteil (Kerf-kompensiert) und verschachtelte Bögen `*_bogenN` |
+| `plotter/mXX/` | DXF + SVG je Plotterteil und Bögen (Stiftlinien in Ebene `SCORE`) |
+| `modules/` | automatisch erzeugte Moduldokumentation, Prüfprotokolle, Vorschaubilder |
+
+
+## Bekannte Eckdaten (Stand Phase 0 – aktualisiert in process_limits.md)
 
 Aus Händler- und Fachpresseangaben, **noch nicht an der offiziellen Bambu-Lab-Spezifikation geprüft** (Aufgabe Phase 5):
 
