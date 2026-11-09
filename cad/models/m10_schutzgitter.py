@@ -35,7 +35,7 @@ def grid_2d():
             if math.hypot(x, y) < DN / 2 + pitch:
                 holes.append(g2.hexagon(E, (x, y), rot=30))
     from shapely.ops import unary_union
-    cells = unary_union(holes).intersection(g2.circle(DN))
+    cells = unary_union(holes).intersection(g2.circle(DN - 2 * RIB))   # Randsteg: Zellen berühren die Flanschbohrung nicht
     return cells
 
 
