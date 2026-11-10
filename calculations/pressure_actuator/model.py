@@ -12,8 +12,9 @@ blende A_L modelliert (turbulente Blendenströmung), zusätzlich eine Entlüftun
     dp/dt = γ·p0/V(t) · ( −dV/dt − Q_leak(p) )
     Q_leak = sign(p) · Cd · A_L · √(2|p|/ρ)
 
-Annahmen: adiabatisch (f ≫ thermische Zeitkonstante, für f ≥ 5 Hz und mm-Kammern nur
-näherungsweise – real liegt der Exponent zwischen 1.0 und 1.4 → Druck ggf. bis 30 % tiefer),
+Annahmen: adiabatisch. Die thermische Grenzschicht ist bei 5 Hz ≈ 1.2 mm, bei 150 Hz ≈ 0.22 mm dick (B);
+in mm-Kammern ist der Vorgang bei tiefen Frequenzen teils isotherm → realer Druck 10–25 % tiefer (G).
+Für Sicherheitsnachweise ist die adiabatische Rechnung damit konservativ.
 Kanal-Trägheit vernachlässigt (gilt weit unterhalb der Helmholtz-Resonanz, s. helmholtz()).
 """
 
@@ -52,15 +53,55 @@ def helmholtz(v0, d_neck, l_neck):
     return C_SOUND / (2 * math.pi) * math.sqrt(a / (v0 * l_eff))
 
 
-def simulate(dv, v0, f, a_leak, cycles=40):
-    """S: eingeschwungene Druckamplitude (max, min) in Pa."""
+MU = 1.81e-5            # Pa·s Viskosität Luft 20 °C
+
+
+def g_capillary(d, l):
+    """B: laminarer Leitwert Kapillare (Hagen-Poiseuille), Q = G·Δp."""
+    return math.pi * d**4 / (128 * MU * l)
+
+
+BLEED = (0.2e-3, 30e-3)  # Entlüftungskapillare Ø0.2 × 30 mm (Gutachten Pneumatik)
+
+
+def bleed_tau(v0, d=BLEED[0], l=BLEED[1]):
+    """B: Zeitkonstante Druckabbau über Kapillare: τ = V0/(γ·p0·G)."""
+    return v0 / (GAMMA * P0 * g_capillary(d, l))
+
+
+def p_worst_double_stroke(dv, v0):
+    """B (exakt, adiabat): Düse in Endlage (V0+dV) dicht verschlossen, Bleed verstopft,
+    Verdränger fährt auf V0−dV → Spitzendruck."""
+    return P0 * (((v0 + dv) / (v0 - dv)) ** GAMMA - 1)
+
+
+def dv_max_double_stroke(p_lim, v0):
+    r = (1 + p_lim / P0) ** (1 / GAMMA)
+    return v0 * (r - 1) / (r + 1)
+
+
+def p_thermal(dT, T=293.15):
+    """B: statischer Druck dichter Kammer bei Erwärmung dT (isochor)."""
+    return P0 * dT / T
+
+
+def p_force_limited(bl, u, re, sd):
+    """B: Voice-Coil, Kammer steifigkeitsbestimmt → Druck durch Spannung begrenzt (DC/statisch)."""
+    return bl * u / re / sd
+
+
+def simulate(dv, v0, f, a_leak, cycles=40, bleed=False, v_extra=0.0):
+    """S: eingeschwungene Druckamplitude (max, min) in Pa. v_extra: Zusatzvolumen (Prüfkammer, Schlauch)."""
     w = 2 * math.pi * f
+    gb = g_capillary(*BLEED) if bleed else 0.0
+    v0 = v0 + v_extra
 
     def rhs(t, y):
         p = y[0]
         v = v0 - dv * math.sin(w * t)
         dvdt = -dv * w * math.cos(w * t)
         q = math.copysign(CD * a_leak * math.sqrt(2 * abs(p) / RHO), p) if a_leak > 0 else 0.0
+        q += gb * p
         return [GAMMA * (P0 + p) / v * (-dvdt - q)]
 
     t_end = cycles / f
@@ -104,24 +145,49 @@ def report() -> str:
     dv_a = SD_A * XMAX_A
     dv_b = a_b * E_B
     L += ["## 2. Verdrängervolumen und Eigensicherheit (B)", "",
-          "Wenn die Düse vollständig dicht verschlossen wird, ist der grösste mögliche Druck durch das Hubvolumen begrenzt "
-          "(p_max = γ·p0·dV/V0). Liegt dieser Wert unter der Grenze, ist das Konzept **eigensicher** gegen Überdruck.", "",
-          "| Konzept | wirksame Fläche | Hub (Amplitude) | dV | V0 | p_max dicht | eigensicher (≤ 5 kPa)? |", "|---|---|---|---|---|---|---|"]
+          "Wird die Düse in **Hubmitte** dicht verschlossen, ist die Amplitude durch das Hubvolumen begrenzt "
+          "(p = γ·p0·dV/V0, linear). Das ist der Normalbetrieb im Dichtfall – **nicht** der Sicherheitsnachweis (siehe unten).", "",
+          "| Konzept | wirksame Fläche | Hub (Amplitude) | dV | V0 | Amplitude dicht | ≤ 5 kPa? |", "|---|---|---|---|---|---|---|"]
     for name, a, x, v in (("A Voice-Coil Ø40 bei Xmax", SD_A, XMAX_A, V0_A), ("B Exzenter e = 0.5 mm", a_b, E_B, V0)):
         dv = a * x
         pm = p_closed(dv, v)
         L.append(f"| {name} | {a * 1e6:.0f} mm² | {x * 1e3:.2f} mm | {dv * 1e9:.0f} mm³ | {v * 1e6:.0f} cm³ | "
-                 f"{pm / 1000:.1f} kPa | {'ja' if pm <= P_LIMIT else 'nein → Hub begrenzen oder V0 erhöhen'} |")
-    v_safe_b = GAMMA * P0 * dv_b / P_LIMIT
-    e_safe_b = P_LIMIT * V0 / (GAMMA * P0 * a_b)
-    L += ["", f"B eigensicher, wenn V0 ≥ {v_safe_b * 1e6:.1f} cm³ oder Exzentrizität ≤ {e_safe_b * 1e3:.2f} mm (B). "
-          f"A: Amplitude elektronisch begrenzt (Strombegrenzung) – Xmax allein ergibt dicht {p_closed(dv_a, V0_A) / 1000:.1f} kPa → "
-          "eigensicher nur mit mechanischem Hubanschlag (s. Sicherheit).", "",
+                 f"{pm / 1000:.1f} kPa | {'ja' if pm <= P_LIMIT else 'nein'} |")
+    dvm = dv_max_double_stroke(P_LIMIT, V0)
+    L += ["", "**Ungünstigster Fall (Gutachten Safety):** Düse wird in der Endlage dicht verschlossen, die Entlüftung ist "
+          "verstopft, der Verdränger durchfährt den vollen Doppelhub; exakte Adiabate (B):", "",
+          "| Konzept / Variante | dV (Amplitude) | V0 | p_worst | ≤ 5 kPa? |", "|---|---|---|---|---|"]
+    for name, dv, v in (("B e = 0.50 mm", a_b * 0.50e-3, V0), ("B e = 0.34 mm", a_b * 0.34e-3, V0),
+                        ("B e = 0.15 mm", a_b * 0.15e-3, V0), ("B e = 0.34 mm, V0 = 5 cm³", a_b * 0.34e-3, 5e-6)):
+        pw = p_worst_double_stroke(dv, v)
+        L.append(f"| {name} | {dv * 1e9:.0f} mm³ | {v * 1e6:.0f} cm³ | {pw / 1000:.1f} kPa | {'ja' if pw <= P_LIMIT else 'nein'} |")
+    L += ["", f"Grenze B: dV ≤ {dvm * 1e9:.1f} mm³ bei V0 = 2 cm³ → **e ≤ {dvm / a_b * 1e3:.2f} mm** (B); mit Toleranz e = 0.15 mm. "
+          f"Dann beträgt die Amplitude im Dichtfall nur ±{p_closed(a_b * 0.15e-3, V0) / 1000:.1f} kPa (B): "
+          "**Eigensicherheit über die Geometrie kostet Reserve gegen Leckage** – das ist der zentrale Zielkonflikt von B.", "",
+          "**Konzept A – kraftbegrenzt statt hubbegrenzt (Gutachten Mechatronik/Pneumatik):** Die Luftfeder der Kammer "
+          f"(k = γ·p0·Sd²/V0 = {GAMMA * P0 * SD_A ** 2 / V0_A / 1000:.1f} kN/m, B) dominiert, die Resonanz liegt bei ≈ 1.1 kHz (B, "
+          "bewegte Masse 0.5 g G). Der Druck folgt der Kraft: p_max = Bl·U/(Re·Sd), unabhängig vom Moment des Verschliessens.", "",
+          "| Treiber (G) | Bl | Re | Sd | p_max bei 5 V | p_max bei 12 V |", "|---|---|---|---|---|---|"]
+    for name, bl, re, sd in (("Ø40, 4 Ω", 1.5, 3.2, 8e-4), ("Ø40, 4 Ω schwach", 1.0, 3.2, 8e-4),
+                             ("Ø28, 8 Ω", 0.6, 7.0, 3.5e-4), ("Exciter + Membran Ø20 (A2)", 2.0, 3.6, 2.05e-4)):
+        L.append(f"| {name} | {bl} T·m | {re} Ω | {sd * 1e4:.1f} cm² | {p_force_limited(bl, 5, re, sd) / 1000:.1f} kPa | "
+                 f"{p_force_limited(bl, 12, re, sd) / 1000:.1f} kPa |")
+    L += ["", "→ A an einer **fest 5-V-Versorgung** (kein USB-PD) ist mit dem richtigen Treiber elektrisch begrenzt; an 12 V "
+          "nicht. Sprunganregung kann kurzzeitig bis ≈ 2× überschwingen (G) → Flankensteilheit in Firmware und Hardware begrenzen. "
+          "Der Exciter A2 mit kleiner Membran braucht eine Spannungsbegrenzung < 5 V oder ein kleineres Bl.", "",
+          f"**Statischer Druck durch Erwärmung** einer dichten Kammer (Bleed verstopft): +10 K → {p_thermal(10) / 1000:.1f} kPa, "
+          f"+20 K → {p_thermal(20) / 1000:.1f} kPa (B). Keine Geometrie- oder Spannungsgrenze erfasst diesen Fall → passives "
+          "Zweiwege-Überdruckventil als zweite Barriere (Abschnitt 7).", "",
+          f"**Entlüftung (Bleed) als Kapillare** Ø{BLEED[0] * 1e3:.1f} × {BLEED[1] * 1e3:.0f} mm: τ = {bleed_tau(V0):.2f} s bei 2 cm³ (B) → "
+          f"Eckfrequenz {1 / (2 * math.pi * bleed_tau(V0)):.1f} Hz; Gleichanteil 5 → 0.2 kPa in {bleed_tau(V0) * math.log(25):.2f} s. "
+          "Die frühere Bohrung Ø0.3–0.5 mm entlüftete 30× zu schnell und vernichtete die Amplitude unter 30 Hz.", "",
           "C: Eine Mikromembranpumpe (Typ 370, G) erreicht 40–80 kPa Überdruck bzw. −40 kPa Unterdruck → **nicht eigensicher**, "
-          "Überdruck-/Unterdruckventil und Drucksensor zwingend.", ""]
+          "die Sicherheit hängt vollständig an Ventilen, Sensor und Firmware.", ""]
     # Simulation über Frequenz und Leck
     L += ["## 3. Druckamplitude mit Leck (S)", "",
-          "Leckblende A_L bildet die unvollständige Abdichtung an der Düse nach (Prüfkammer im Demonstrator). "
+          "Leckblende A_L bildet die unvollständige Abdichtung an der Düse nach (Prüfadapter im Demonstrator). Diese Tabellen "
+          "verwenden die ursprünglichen Auslegungswerte (B: e = 0.5 mm) zur Darstellung des Leckeinflusses – nach der Sicherheits"
+          "korrektur ist B auf e ≤ 0.15 mm begrenzt (Amplituden dann ≈ 30 %). "
           "Werte: eingeschwungen, Spitze positiv / negativ in kPa.", ""]
     for name, dv, v in (("B (dV = %.0f mm³, V0 = 2 cm³)" % (dv_b * 1e9), dv_b, V0),
                         ("A (dV = 100 mm³ ≈ 0.12 mm Hub, V0 = 4 cm³)", 100e-9, V0_A)):
@@ -133,10 +199,20 @@ def report() -> str:
                 row.append(f"+{pmax / 1000:.2f} / {pmin / 1000:.2f}")
             L.append(f"| {f} Hz | " + " | ".join(row) + " |")
         L.append("")
+    L += ["**Einfluss Entlüftungskapillare und Prüfkammer** (Konzept B, e = 0.15 mm, V0 = 2 cm³, ohne Leckblende) (S):", "",
+          "| f | ohne Bleed | mit Kapillare | mit Kapillare + 5 cm³ Prüfkammer |", "|---|---|---|---|"]
+    dv15 = a_b * 0.15e-3
+    for f in (5, 10, 30, 100):
+        r = [simulate(dv15, V0, f, 0.0), simulate(dv15, V0, f, 0.0, bleed=True),
+             simulate(dv15, V0, f, 0.0, bleed=True, v_extra=5e-6)]
+        L.append(f"| {f} Hz | " + " | ".join(f"+{a / 1000:.2f} / {b / 1000:.2f}" for a, b in r) + " |")
+    L += ["", "Die Prüfkammer vergrössert das Volumen und senkt den Druck stark → Modell und Messung immer mit dem "
+          "tatsächlichen Gesamtvolumen (inkl. Schlauch zum Sensor) vergleichen; der Sicherheitsnachweis S1 erfolgt mit "
+          "Blindstopfen **direkt an der Düse**.", ""]
     L += ["Lesart: Mit dichter Kammer ist der Druck frequenzunabhängig (reiner Volumeneffekt). Je grösser das Leck, desto "
           "stärker fällt die Amplitude bei tiefen Frequenzen ab (Luft entweicht innerhalb einer Periode). Für ein Leck "
           "Ø2 mm braucht man bei 30 Hz ein Vielfaches des Hubvolumens → **Abdichtung/Düsengeometrie ist die wichtigste "
-          "Einflussgrösse**, nicht die Antriebskraft. Nichtlinear: Unterdruckspitzen etwas grösser als Überdruckspitzen.", ""]
+          "Einflussgrösse**, nicht die Antriebskraft. Nichtlinear: im Dichtfall sind die Überdruckspitzen grösser als die Unterdruckspitzen (+7.75 / −6.86 kPa).", ""]
     # Kräfte und Leistung
     f_a = P_TARGET * SD_A
     f_b = P_TARGET * a_b
@@ -145,12 +221,13 @@ def report() -> str:
     I_RMS_A = f_a / 1.5 / math.sqrt(2)
     L += ["## 4. Kräfte, Leistung, Antrieb (B/G)", "",
           "| Grösse | A Voice-Coil | B Exzenter | C Pumpe + Ventile |", "|---|---|---|---|",
+          "| Druck pro Strom | Bl/Sd: Ø40 (Bl 1.5) 1.9 kPa/A; Ø28 (Bl 0.6) 1.7 kPa/A; Exciter A2 (Bl 2) 9.8 kPa/A (B aus G) | – | – |",
           f"| Kraft auf Verdränger bei 2 kPa | {f_a:.2f} N (B) | {f_b:.2f} N (B) | – |",
           f"| Antriebsmoment / Strom | Bl ≈ 1.5 T·m (G) → I ≈ {f_a / 1.5:.1f} A Spitze | M = F·e = {f_b * E_B * 1e3:.2f} mN·m (B) | Pumpe 3–6 V, 0.2–0.4 A (G) |",
           f"| Pneumatische Leistung (dicht, Blindleistung) | ≈ 0 W | ≈ 0 W | – |",
           f"| Pneumatische Wirkleistung Leck Ø1 mm, ±2 kPa (obere Schranke p·Q_peak/2) | ≈ {P_LEAK_W:.2f} W (B) | gleich | Pumpe muss Leckstrom nachliefern |",
-          f"| Elektrische Leistung | {I_RMS_A ** 2 * 4:.1f}–{I_RMS_A ** 2 * 8:.1f} W bei 2 kPa dicht (B aus G: Bl, Re 4–8 Ω); Ø28-Treiber ≈ ¼ | 0.5–1.5 W (G, Motor 130/N20 ohne Getriebe) | 2–4 W (G, Pumpe + 2 Ventile) |",
-          "| Drehzahl / Frequenz | direkt 1–200 Hz (Verstärker) | f = n/60 → 300–9000 min⁻¹ für 5–150 Hz | Ventile 5–30 Hz (Schaltzeit 5–15 ms, G) |", ""]
+          f"| Elektrische Leistung bei 2 kPa dicht | Ø40/4 Ω: {I_RMS_A ** 2 * 3.2:.1f} W; Ø28/8 Ω (Bl 0.6): ≈ 5.4 W, 9.3 V Spitze → an 5 V nicht erreichbar; Exciter A2: ≈ 0.15 W (B aus G) | 0.5–1.5 W (G, Motor 130/N20 ohne Getriebe) | 2–4 W (G, 2 Pumpen + 2 Ventile; Ventilspulen je 1–2 W) |",
+          "| Drehzahl / Frequenz | direkt 1–200 Hz (Verstärker, untere Grenzfrequenz des Moduls prüfen) | f = n/60; stabiler Lauf Bürstenmotor erst ab ≈ 600–900 min⁻¹ → **≈ 10–150 Hz** (G); Gimbal-BLDC mit FOC ab ≈ 1 Hz | Ventile 10–20 ms (G) → ≈ 5–25 Hz |", ""]
     # Geräusch grob
     L += ["## 5. Geräusch (G – nur Grössenordnung, Messung nötig)", "",
           "Tieffrequente Druckschwankungen (5–150 Hz) sind wenig hörbar (A-Bewertung −70…−17 dB). Hörbar sind vor allem: "
