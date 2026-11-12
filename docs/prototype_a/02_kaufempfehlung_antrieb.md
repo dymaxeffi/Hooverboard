@@ -8,16 +8,18 @@ Auswertung: `lautsprecher_auswertung_kaufkandidaten.md`.
 
 | Treiber | Nenngrösse | Bl | Re | Feder | Strom / Leistung für 2 kPa | Vorwiderstand (rechn. → Normwert) | Datenlage |
 |---|---|---|---|---|---|---|---|
-| **Dayton Audio CE32A-4** | **1¼" (≈ Ø32 mm)** | 1,59 T·m | 3,6 Ω | ≈ 0,8 N/mm (**geschätzt**) | 0,41 A / 0,3 W | 5,1 → **5,6 Ω** | Bl aus Bl/√Re abgeleitet, Cms nicht veröffentlicht |
-| Aura Cougar NSW1-205-8A | 1" | 1,9 T·m | 5,5 Ω | 0,96 N/mm | 0,37 A / 0,4 W | 4,9 → **5,6 Ω** | Quellen teils widersprüchlich (Xmax, Vas) |
-| **Tang Band W1-2121S** | 1¾" | 3,14 T·m | 3,5 Ω | 1,05 N/mm | 0,23 A / 0,09 W | 13,7 → **15 Ω** | konsistent in mehreren Quellen |
-| Dayton Audio ND65-4 | 2½" (Ø63 mm) | 2,7 T·m | 3,6 Ω | 0,79 N/mm | 0,24 A / 0,10 W | 11,2 → 12 Ω | gut dokumentiert, **zu gross** |
+| **Dayton Audio CE32A-4** | **1¼" (≈ Ø32 mm)** | 1,59 T·m | 3,6 Ω | ≈ 0,8 N/mm (**geschätzt**) | 0,41 A / 0,3 W | 6,1 → **6,8 Ω** | Bl aus Bl/√Re abgeleitet, Cms nicht veröffentlicht |
+| Aura Cougar NSW1-205-8A | 1" | 1,9 T·m | 5,5 Ω | 0,96 N/mm | 0,37 A / 0,4 W | 6,1 → **6,8 Ω** | Quellen teils widersprüchlich (Xmax, Vas) |
+| **Tang Band W1-2121S** | 1¾" | 3,14 T·m | 3,5 Ω | 1,05 N/mm | 0,23 A / 0,09 W | 15,6 → **18 Ω** | konsistent in mehreren Quellen |
+| Dayton Audio ND65-4 | 2½" (Ø63 mm) | 2,7 T·m | 3,6 Ω | 0,79 N/mm | 0,24 A / 0,10 W | 13,2 → 15 Ω | gut dokumentiert, **zu gross** |
 
 Alle vier erreichen im Dichtfall die Begrenzung von 4 kPa und mit Leck (0,3 mm Hub) 2,5–2,8 kPa. Die Aussenmasse (Korb, Tiefe) bitte vor der Bestellung im Datenblatt des Händlers prüfen; die Nenngrösse in Zoll bezieht sich auf die Membran, der Korb ist etwas grösser.
 
 ## Empfehlung
 
-**Gewählt (2026-11-12): Tang Band W1-2121S als Hauptantrieb**, Vorwiderstand rechnerisch 13,7 Ω → **15 Ω, ≥ 3 W** (p_max ≈ 3,7 kPa, B aus G).
+**Gewählt (2026-11-12): Tang Band W1-2121S als Hauptantrieb**, Vorwiderstand **18 Ω, ≥ 3 W**.
+
+> **Aktualisiert:** Treiber ist jetzt eine H-Brücke DRV8833 (der Verstärker PAM8302A ist nicht lieferbar). Sie kann im Fehlerfall die vollen 5 V ausgeben, deshalb ist der Vorwiderstand auf 5 V ausgelegt (vorher 4,5 V). Mit 18 Ω: p_max 3,6 kPa, mit Leck 2,0 kPa, Fehlerstrom 0,23 A (Widerstand 1,0 W, Spule 0,19 W) (B aus G). Nach der Bl-Messung ggf. 15–16 Ω.
 
 **Vor der Bestellung prüfen:** Hat der Treiber in der Mitte eine bewegliche Staubkappe oder einen **feststehenden Phasenstöpsel**? Bei einem Phasenstöpsel wird der Stössel nicht mittig geklebt, sondern über einen **ringförmigen Mitnehmer** am Konus um den Stöpsel angekoppelt (Konstruktion Schritt 3).
 
@@ -38,13 +40,15 @@ Datenquellen: [Loudspeaker Database W1-2121S](https://loudspeakerdatabase.com/Ta
 
 | Teil | Spezifikation | Zweck |
 |---|---|---|
-| Vorwiderstände | je 2 × **5,6 Ω, 10 Ω, 15 Ω**, je ≥ 3 W (Draht/Zement) | passive Druckbegrenzung (S1), passend zu jedem Kandidaten; endgültiger Wert nach Messung |
+| Vorwiderstände | je 2 × **6,8 Ω, 15 Ω, 18 Ω**, je ≥ 3 W (Draht/Zement) | passive Druckbegrenzung (S1), passend zu jedem Kandidaten; endgültiger Wert nach Messung |
 
 Verstärker, Mikrocontroller, Drucksensor und Netzteil folgen in Schritt 2 – am besten zusammen bestellen.
 
 ---
 
 ## Ursprüngliche Empfehlung (zu gross): Dayton Audio ND65-4
+
+> Historisch, nicht mehr gültig: Die Werte in diesem Abschnitt sind noch mit 4,5 V Verstärkerspannung berechnet. Mit der H-Brücke (5 V) wären 15 Ω nötig.
 
 
 2,5-Zoll-Breitbandlautsprecher (Ø63 mm, Neodym-Magnet, Aluminiumkonus, 4 Ω), eingesetzt in der Bauform **„Lautsprecher als Motor“**: Ein Stössel auf der Staubkappe treibt eine geplottete Membran Ø20 mm.

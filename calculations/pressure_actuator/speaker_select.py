@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DIR = ROOT / "docs" / "prototype_a"
 G = 9.81
-U_AMP = 4.5          # V Spitze, Klasse-D-BTL an 5 V (≈ 0.5 V Verlust, Annahme)
+U_AMP = 5.0          # V: H-Brücke DRV8833 an 5 V kann im Fehler die volle Spannung ausgeben (ungünstigster Fall)
 P_TARGET = 2000.0    # Pa Zielamplitude
 P_REACH = 3000.0     # Pa erforderliche Reserve (Leck, Spulenerwärmung +35 % Re)
 P_CAP = 4000.0       # Pa Begrenzung (S1, Abbruchschwelle)
@@ -117,7 +117,7 @@ def report(rows, src):
     ev.sort(key=rank_key)
     L = ["# Prototyp A – Auswertung Lautsprecher", "",
          f"> Automatisch erzeugt von `calculations/pressure_actuator/speaker_select.py` aus `{src.relative_to(ROOT)}`.", "",
-         f"Annahmen: Verstärker {U_AMP} V Spitze (Klasse-D-BTL an 5 V), Ziel ±{P_TARGET / 1000:.0f} kPa, "
+         f"Annahmen: Verstärker {U_AMP} V Spitze (H-Brücke an 5 V, ungünstigster Fall), Ziel ±{P_TARGET / 1000:.0f} kPa, "
          f"Reserve ≥ {P_REACH / 1000:.0f} kPa, Begrenzung {P_CAP / 1000:.0f} kPa (Projektgrenze {P_LIMIT / 1000:.0f} kPa). "
          "Bl und Re gemessen (E), alle abgeleiteten Werte berechnet (B) mit dem Modell „Kammer steifer als Aufhängung“.", "",
          f"Bauformen: **direkt** = Konus bildet die Kammerwand (Fläche Sd); **Motor** = Konus offen, Stössel auf der Staubkappe "
