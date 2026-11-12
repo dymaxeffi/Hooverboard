@@ -1,2 +1,5 @@
 id,beschreibung,d_aussen_mm,d_sd_mm,re_ohm,nenn_w,staubkappe,polkernbohrung,sicke,zustand,bl_tm,cms_mm_n,bemerkung
 ND65-4,Dayton Audio ND65-4 2.5in Alu Neodym 4 Ohm (Datenblattwerte G),63,44.6,3.56,15,dicht,nein,gummi,ok,2.7,1.265,Sd 15.6 cm2; Re aus Bl/sqrt(Re)=1.43; Xmax +-3.5 mm
+W1-2121S,Tang Band W1-2121S 1.75in Alu Neodym 4 Ohm (Datenblattwerte G),,33.7,3.5,10,dicht,nein,gummi,ok,3.14,0.949,Sd 8.9 cm2; Xmax 2.3 mm; Aussenmass im Datenblatt pruefen
+NSW1-205-8A,Aura Cougar NSW1-205-8A 1in Neodym 8 Ohm (Datenblattwerte G),,25.7,5.5,5,dicht,nein,gummi,ok,1.9,1.047,Sd 5.2 cm2; Xmax 2 mm; Quellen widerspruechlich
+CE32A-4,Dayton CE32A-4 1.25in Mini 4 Ohm (Bl abgeleitet; Cms GESCHAETZT aus Fs 262 Hz und Mms 0.3 g),,22.3,3.57,2,dicht,nein,gummi,ok,1.59,1.23,Sd 3.9 cm2; Cms unsicher
