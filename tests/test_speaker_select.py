@@ -24,7 +24,7 @@ def test_pressure_limit_and_series_resistor():
     sd = ss.A_PISTON
     assert e["p_max"] == pytest.approx(e["bl"] * ss.U_AMP / (3.4 * sd))
     assert e["p_max_capped"] == pytest.approx(ss.P_CAP, rel=1e-6)   # Vorwiderstand begrenzt exakt
-    assert e["p_reach"] < e["p_max"]                                # Aufhängung frisst Kraft
+    assert e["p_leak"] < e["p_max_capped"]                          # Aufhängung frisst Kraft
 
 
 def test_direct_vs_motor_area():

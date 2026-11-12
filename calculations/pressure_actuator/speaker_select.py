@@ -50,6 +50,8 @@ def evaluate(r: dict, variant: str = "direkt") -> dict:
     bl = None
     if r.get("bl_masse_g") and r.get("bl_strom_a"):
         bl = float(r["bl_masse_g"]) / 1000 * G / float(r["bl_strom_a"])
+    elif r.get("bl_tm"):                                  # Datenblattwert (G) statt Messung
+        bl = float(r["bl_tm"])
     out["bl"] = bl
     if bl is None:
         out["status"] = "Bl messen"
@@ -58,11 +60,12 @@ def evaluate(r: dict, variant: str = "direkt") -> dict:
     out["kpa_per_a"] = bl / sd / 1000
     out["p_max"] = bl * U_AMP / (re * sd)            # Sicherheitsgrenze (ohne Aufhängung → konservativ)
     k_s = None
-    if r.get("bl_auslenkung_mm"):
+    if r.get("bl_auslenkung_mm") and r.get("bl_masse_g"):
         k_s = float(r["bl_masse_g"]) / 1000 * G / (float(r["bl_auslenkung_mm"]) / 1000)
+    elif r.get("cms_mm_n"):                               # Datenblatt: Nachgiebigkeit Cms → k = 1/Cms
+        k_s = 1 / (float(r["cms_mm_n"]) / 1000)
     out["k_s"] = k_s
     f_spring = (k_s or 0.0) * X_OP                    # Kraft, die die Aufhängung bei Betriebshub frisst
-    out["p_reach"] = max(0.0, (bl * U_AMP / re - f_spring) / sd)
     if k_s is None:
         notes.append("Auslenkung messen (Federanteil fehlt)")
     i2k = (P_TARGET * sd + f_spring) / bl
@@ -81,13 +84,15 @@ def evaluate(r: dict, variant: str = "direkt") -> dict:
         rs = bl * U_AMP / (P_CAP * sd) - re
     out["r_series"] = rs
     out["p_max_capped"] = bl * U_AMP / ((re + rs) * sd)
+    # Betrieb mit Leck: Hub X_OP nötig, Aufhängung zieht Kraft ab; Vorwiderstand mitgerechnet
+    out["p_leak"] = max(0.0, (bl * U_AMP / (re + rs) - f_spring) / sd)
     if variant == "direkt" and r.get("staubkappe", "").strip().lower().startswith("gewebe"):
         notes.append("Staubkappe abdichten")
     if variant == "direkt" and r.get("polkernbohrung", "").strip().lower() == "ja":
         notes.append("Polkernbohrung abdichten")
     if variant == "motor" and r.get("staubkappe", "").strip().lower().startswith("gewebe"):
         notes.append("Stössel auf Gewebekappe: Klebefläche verstärken")
-    if out["p_reach"] < P_REACH:
+    if out["p_max_capped"] < P_REACH or out["p_leak"] < P_TARGET:
         out["status"] = "zu schwach"
     elif "defekt" in notes:
         out["status"] = "defekt"
@@ -117,18 +122,19 @@ def report(rows, src):
          "Bl und Re gemessen (E), alle abgeleiteten Werte berechnet (B) mit dem Modell „Kammer steifer als Aufhängung“.", "",
          f"Bauformen: **direkt** = Konus bildet die Kammerwand (Fläche Sd); **Motor** = Konus offen, Stössel auf der Staubkappe "
          f"treibt eine geplottete Membran Ø20/12 (wirksam {A_PISTON * 1e4:.2f} cm²). Je Lautsprecher ist die bessere Bauform gezeigt.", "",
-         "| Rang | ID | Beschreibung | Bauform | wirks. Fläche cm² | Re Ω | Bl T·m | Feder N/mm | kPa/A | erreichbar 5 V | p_max 5 V (Sicherheit) | Strom für 2 kPa | Leistung 2 kPa | Vorwiderstand | Status | Hinweise |",
-         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+         "| Rang | ID | Beschreibung | Bauform | wirks. Fläche cm² | Re Ω | Bl T·m | Feder N/mm | kPa/A | p_max 5 V ohne Begrenzung | Vorwiderstand | dicht max. (begrenzt) | mit Leck, 0,3 mm Hub | Strom für 2 kPa | Leistung 2 kPa | Status | Hinweise |",
+         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for i, e in enumerate(ev, 1):
         if e["bl"] is None:
-            L.append(f"| – | {e['id']} | {e.get('beschreibung', '')} | – | – | {float(e['re_ohm']):.1f} | – | – | – | – | – | – | – | – | "
+            L.append(f"| – | {e['id']} | {e.get('beschreibung', '')} | – | – | {float(e['re_ohm']):.1f} | – | – | – | – | – | – | – | – | – | "
                      f"{e['status']} | {', '.join(e['notes'])} |")
             continue
         rs = f"{e['r_series']:.1f} Ω" if e["r_series"] > 0 else "–"
         ks = f"{e['k_s'] / 1000:.2f}" if e["k_s"] else "–"
         L.append(f"| {i} | {e['id']} | {e.get('beschreibung', '')} | {e['variant']} | {e['sd_cm2']:.2f} | {float(e['re_ohm']):.1f} | {e['bl']:.2f} | "
                  f"{ks} | "
-                 f"{e['kpa_per_a']:.2f} | {e['p_reach'] / 1000:.1f} kPa | {e['p_max'] / 1000:.1f} kPa | {e['i_2k']:.2f} A / {e['u_2k']:.1f} V | {e['p_2k']:.2f} W | {rs} | "
+                 f"{e['kpa_per_a']:.2f} | {e['p_max'] / 1000:.1f} kPa | {rs} | {e['p_max_capped'] / 1000:.1f} kPa | {e['p_leak'] / 1000:.1f} kPa | "
+                 f"{e['i_2k']:.2f} A / {e['u_2k']:.1f} V | {e['p_2k']:.2f} W | "
                  f"**{e['status']}** | {', '.join(e['notes'])} |")
     best = [e for e in ev if e["status"] == "geeignet"]
     L += ["", "## Empfehlung", ""]
@@ -144,7 +150,7 @@ def report(rows, src):
             L.append("Ersatz: " + ", ".join(f"{e['id']}" for e in best[1:4]) + ".")
     else:
         L.append("Noch kein geeigneter Lautsprecher (Bl messen bzw. stärkeren Treiber wählen).")
-    L += ["", f"Kriterien: erreichbarer Druck ≥ 3 kPa an 5 V nach Abzug der Aufhängungskraft bei {X_OP * 1e3:.1f} mm Hub (sonst zu schwach), Effektivstrom bei 2 kPa ≤ 50 % des Nennstroms, "
+    L += ["", f"Kriterien: dicht max. ≥ {P_REACH / 1000:.0f} kPa nach Begrenzung, **und** mit Leck (Hub {X_OP * 1e3:.1f} mm, Aufhängungskraft abgezogen, Vorwiderstand eingerechnet) ≥ {P_TARGET / 1000:.0f} kPa, Effektivstrom bei 2 kPa ≤ 50 % des Nennstroms, "
           "Rang nach Leistungsbedarf (weniger Wärme = besser). Ein zu starker Lautsprecher ist kein Nachteil: Vorwiderstand "
           "begrenzt ihn sicher, auch wenn der Verstärker im Fehlerfall Gleichspannung ausgibt. Die Sicherheitsgrenze p_max "
           "vernachlässigt die Aufhängung und liegt damit auf der sicheren Seite; der Vorwiderstand wird danach bemessen."]
@@ -152,13 +158,14 @@ def report(rows, src):
 
 
 def main(argv):
-    src = Path(argv[0]) if argv else DIR / "lautsprecher_messung.csv"
+    src = Path(argv[0]).resolve() if argv else DIR / "lautsprecher_messung.csv"
     rows = [r for r in csv.DictReader(open(src, encoding="utf-8")) if r.get("id", "").strip()]
     if not rows:
         print(f"{src.name} ist noch leer → Beispieldatei wird ausgewertet.")
         src = DIR / "lautsprecher_beispiel.csv"
         rows = [r for r in csv.DictReader(open(src, encoding="utf-8")) if r.get("id", "").strip()]
-    out = DIR / ("lautsprecher_auswertung.md" if "beispiel" not in src.name else "lautsprecher_auswertung_beispiel.md")
+    out = DIR / ("lautsprecher_auswertung.md" if src.name == "lautsprecher_messung.csv"
+                 else src.name.replace("lautsprecher_", "lautsprecher_auswertung_").replace(".csv", ".md"))
     out.write_text(report(rows, src), encoding="utf-8")
     print(out.read_text(encoding="utf-8"))
 

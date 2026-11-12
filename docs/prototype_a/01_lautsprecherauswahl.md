@@ -111,8 +111,9 @@ Was das Skript je Lautsprecher und Bauform rechnet (B, aus deinen Messwerten):
 | Grösse | Bedeutung |
 |---|---|
 | kPa/A | Druck pro Ampere = Bl / Fläche |
-| erreichbar 5 V | Druck, der an 5 V maximal möglich ist, nach Abzug der Aufhängungskraft bei 0,3 mm Hub. Muss ≥ 3 kPa sein |
-| p_max 5 V (Sicherheit) | obere Grenze ohne Abzug der Aufhängung. Danach wird der Vorwiderstand auf ≤ 4 kPa bemessen |
+| p_max 5 V ohne Begrenzung | Druck im Dichtfall an 5 V (Aufhängung vernachlässigt → sichere Seite). Danach wird der Vorwiderstand auf 4 kPa bemessen |
+| dicht max. (begrenzt) | mit Vorwiderstand, muss ≥ 3 kPa sein |
+| mit Leck, 0,3 mm Hub | Druck, wenn Leckage 0,3 mm Hub verlangt: Aufhängungskraft abgezogen, Vorwiderstand eingerechnet. Muss ≥ 2 kPa sein |
 | Strom / Leistung für 2 kPa | weniger ist besser (Wärme). Rangkriterium |
 | Vorwiderstand | begrenzt p_max auf 4 kPa. Belastbarkeit für den Gleichstrom-Fehlerfall wird angegeben |
 
