@@ -1,0 +1,6 @@
+id,beschreibung,d_aussen_mm,d_sd_mm,re_ohm,nenn_w,staubkappe,polkernbohrung,sicke,zustand,bl_masse_g,bl_auslenkung_mm,bl_strom_a,bemerkung
+BSP1,BEISPIEL Breitband 40 mm 4 Ohm,40,33,3.4,3,dicht,nein,gummi,ok,13.2,0.20,0.090,erfundene Werte zur Demonstration
+BSP2,BEISPIEL Kleinlautsprecher 28 mm 8 Ohm,28,23,7.2,1,gewebe,ja,gummi,ok,4.4,0.12,0.075,erfundene Werte
+BSP3,BEISPIEL Laptop-Lautsprecher 20x30 mm,30,20,7.8,1,dicht,nein,gummi,ok,2.2,0.08,0.060,erfundene Werte
+BSP4,BEISPIEL Tieftöner 50 mm 4 Ohm,50,42,3.6,5,dicht,ja,schaum,ok,13.2,0.35,0.055,erfundene Werte
+BSP5,BEISPIEL ohne Bl-Messung,36,30,7.0,2,dicht,nein,gummi,ok,,,,nur Sichtung
