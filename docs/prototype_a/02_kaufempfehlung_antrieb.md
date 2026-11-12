@@ -17,6 +17,12 @@ Alle vier erreichen im Dichtfall die Begrenzung von 4 kPa und mit Leck (0,3 mm H
 
 ## Empfehlung
 
+**Gewählt (2026-11-12): Tang Band W1-2121S als Hauptantrieb**, Vorwiderstand rechnerisch 13,7 Ω → **15 Ω, ≥ 3 W** (p_max ≈ 3,7 kPa, B aus G).
+
+**Vor der Bestellung prüfen:** Hat der Treiber in der Mitte eine bewegliche Staubkappe oder einen **feststehenden Phasenstöpsel**? Bei einem Phasenstöpsel wird der Stössel nicht mittig geklebt, sondern über einen **ringförmigen Mitnehmer** am Konus um den Stöpsel angekoppelt (Konstruktion Schritt 3).
+
+Weitere Optionen:
+
 - **Kompakt:** **Dayton Audio CE32A-4** – kleinster Kandidat und günstig. Die Federsteifigkeit ist geschätzt, deshalb nach Eintreffen unbedingt mit dem Münz-Nullabgleich nachmessen.
 - **Sicher dokumentiert und stärker:** **Tang Band W1-2121S** – etwas grösser, aber mit den verlässlichsten Daten und der grössten Reserve.
 
