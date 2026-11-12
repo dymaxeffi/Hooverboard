@@ -38,9 +38,11 @@ def evaluate(r: dict, variant: str = "direkt") -> dict:
     """variant 'direkt': Konus bildet Kammerwand (Fläche Sd). 'motor': Konus offen, Stössel treibt Membran A_PISTON."""
     out = dict(r)
     out["variant"] = variant
-    d = float(r["d_sd_mm"]) / 1000
     re = float(r["re_ohm"])
-    sd = math.pi * d**2 / 4 if variant == "direkt" else A_PISTON
+    has_cone = bool(r.get("d_sd_mm", "").strip())       # Exciter/Stössel-Wandler: kein Konus → nur Motor-Bauform
+    if variant == "direkt" and not has_cone:
+        variant = out["variant"] = "motor"
+    sd = math.pi * (float(r["d_sd_mm"]) / 1000) ** 2 / 4 if variant == "direkt" else A_PISTON
     out["sd_cm2"] = sd * 1e4
     notes = []
     if r.get("zustand", "ok").strip().lower() not in ("ok", ""):

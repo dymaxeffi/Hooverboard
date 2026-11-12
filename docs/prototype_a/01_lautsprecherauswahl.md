@@ -88,6 +88,14 @@ Die Absenkung ohne Strom liefert gleichzeitig die Federsteifigkeit der Aufhängu
 - Bl auf etwa ±5–10 % genau. Das reicht für die Auswahl.
 - Fehlerquellen: schräg liegende Münze, Lineal nicht immer an derselben Stelle, Spulenerwärmung (Re steigt, der Strom bleibt aber gemessen).
 
+### Sonderfall: Wandler mit Stössel (Exciter, Resonanzlautsprecher, Körperschallwandler)
+
+Diese Wandler passen direkt zur Motor-Bauform: Der Stössel treibt die Membran, ein Umbau entfällt. Messung wie oben, mit folgenden Abweichungen:
+- **Gehäuse bzw. Magnet fest einspannen** (Schraubstock mit Zulage oder Klebeknete auf der Tischplatte), **Stössel senkrecht nach oben**.
+- Masse auf das Stösselende legen. Auslenkung und Nullage am Stösselende messen.
+- In der CSV `d_sd_mm` **leer lassen**. Das Skript rechnet dann nur die Motor-Bauform. In `beschreibung` „Exciter“ bzw. „Stössel“ und den Aufdruck notieren.
+- Bitte zusätzlich den **freien Hub** des Stössels messen: wie weit er sich von Hand ohne Anschlag in beide Richtungen bewegen lässt. Nötig sind mindestens ±0,3 mm.
+
 ---
 
 ## Auswertung
