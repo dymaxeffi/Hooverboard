@@ -36,6 +36,7 @@ Annahmen sind in `calculations/hoverlib/parameters.py` als `ANN` markiert.
 | `safety/` | Gefahrenanalyse, rechtliche Fragen |
 | `documentation/` | Projektplan, Decision Log, Risiken, offene Fragen |
 | `tests/` | automatisierte Tests (pytest) |
+| `packaging/` | Nebenprojekt: Rahmenbox – parametrischer Faltschachtel-Generator (`packaging/README.md`) |
 
 ## Verwenden
 

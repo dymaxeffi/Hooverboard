@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rahmenbox Generator</title>
+<style>
+:root{
+  --bg:#f4f1ea; --panel:#fffdf8; --ink:#2b2620; --muted:#7a7166; --line:#d9d2c5;
+  --accent:#c2551f; --accent2:#2f6db5; --ok:#2e7d32; --warn:#b7791f; --fail:#c62828;
+  --cut:#d22; --fold:#2f6db5; --kraft:#c9a27e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1a17; --panel:#26231f; --ink:#ece6da; --muted:#a59c8f; --line:#3d3832;
+    --accent:#e07a45; --accent2:#6fa3e0; --ok:#66bb6a; --warn:#e0a83a; --fail:#ef5350;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px}
+header span{color:var(--muted);font-size:13px}
+.app{display:grid;grid-template-columns:310px 1fr;min-height:calc(100vh - 50px)}
+aside{border-right:1px solid var(--line);padding:12px 14px;overflow:auto;background:var(--panel)}
+main{padding:0 0 20px;min-width:0}
+fieldset{border:1px solid var(--line);border-radius:8px;margin:0 0 10px;padding:8px 10px}
+legend{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:0 4px}
+label.row{display:grid;grid-template-columns:96px 1fr 62px;align-items:center;gap:6px;margin:4px 0;font-size:13px}
+label.row2{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:6px;margin:4px 0;font-size:13px}
+input[type=number]{width:100%;padding:3px 5px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--ink);font:inherit}
+input[type=range]{width:100%}
+select{width:100%;padding:4px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--ink);font:inherit}
+.hint{font-size:12px;color:var(--muted);margin:4px 0}
+button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:6px 10px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:hover{filter:brightness(.97)}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:8px 12px 0;flex-wrap:wrap;position:sticky;top:0;background:var(--bg);z-index:5}
+nav.tabs button{border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;background:transparent;color:var(--muted)}
+nav.tabs button.on{background:var(--panel);border-color:var(--line);color:var(--ink);margin-bottom:-1px}
+section.tab{display:none;padding:14px 16px}
+section.tab.on{display:block}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:11.5px}
+.view{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.view svg{display:block;width:100%;height:auto;max-height:72vh}
+#c3d{width:100%;height:62vh;display:block;cursor:grab;touch-action:none}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 2px}
+.legend i{display:inline-block;width:22px;height:0;border-top:2px solid;vertical-align:middle;margin-right:4px}
+.checks{list-style:none;padding:0;margin:0}
+.checks li{display:grid;grid-template-columns:22px 1fr;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}
+.checks .d{color:var(--muted);font-size:12.5px}
+.ic{font-weight:700}
+.ic.pass{color:var(--ok)} .ic.warn{color:var(--warn)} .ic.fail{color:var(--fail)} .ic.info{color:var(--accent2)}
+table{border-collapse:collapse;width:100%;font-size:13px;background:var(--panel)}
+th,td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+th{background:var(--bg);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.sel td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.dots{letter-spacing:1px;color:var(--accent)}
+.guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+.step canvas{width:100%;height:190px;display:block}
+.step h4{margin:6px 2px 2px;font-size:14px}
+.step p{margin:2px;font-size:13px;color:var(--ink)}
+.prose{max-width:900px}
+.prose h2{font-size:17px;margin:18px 0 6px}
+.prose h3{font-size:15px;margin:14px 0 4px}
+.prose p,.prose li{font-size:13.5px}
+.ctrl3d{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.ctrl3d input[type=range]{flex:1;min-width:180px}
+.badge{display:inline-block;font-size:11px;padding:1px 6px;border-radius:9px;border:1px solid var(--line);color:var(--muted)}
+.busy{color:var(--muted);font-style:italic}
+@media (max-width:820px){.app{grid-template-columns:1fr}aside{border-right:none;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Rahmenbox – parametrischer Schnittmuster-Generator</h1>
+  <span>Einteilige, klebstofffreie Faltschachtel mit Gehrungsrahmen-Front · alle Masse in mm</span>
+</header>
+<div class="app">
+<aside>
+  <fieldset>
+    <legend>Verschlusstechnik</legend>
+    <select id="variant"></select>
+    <p class="hint" id="variantDesc"></p>
+  </fieldset>
+  <fieldset>
+    <legend>Innenmasse Produkt</legend>
+    <label class="row">X Breite<input type="range" id="Xr" min="20" max="90" step="1"><input type="number" id="X" min="20" max="90" step="0.5"></label>
+    <label class="row">Y Höhe<input type="range" id="Yr" min="20" max="90" step="1"><input type="number" id="Y" min="20" max="90" step="0.5"></label>
+    <label class="row">Z Tiefe<input type="range" id="Zr" min="10" max="90" step="1"><input type="number" id="Z" min="10" max="90" step="0.5"></label>
+    <label class="row">Rahmen w<input type="range" id="wr" min="4" max="30" step="0.5"><input type="number" id="w" min="4" max="40" step="0.5"></label>
+    <p class="hint" id="openingHint"></p>
+  </fieldset>
+  <fieldset>
+    <legend>Material</legend>
+    <label class="row2">Typ<select id="material"></select></label>
+    <label class="row">Stärke t<span></span><input type="number" id="t" min="0.05" max="1.5" step="0.01"></label>
+    <label class="row">g/m²<span></span><input type="number" id="gsm" min="40" max="800" step="10"></label>
+    <label class="row2"><span>Eckzungen</span><span><input type="checkbox" id="tuck"> innen einstecken</span></label>
+    <label class="row">Zungentiefe<span class="hint">0 = auto</span><input type="number" id="tuckD" min="0" max="40" step="0.5"></label>
+  </fieldset>
+  <fieldset>
+    <legend>Materialbogen &amp; Plotter</legend>
+    <label class="row2">Bogen<select id="sheetPreset"></select></label>
+    <label class="row">Breite<span></span><input type="number" id="sheetW" min="50" max="2000" step="1"></label>
+    <label class="row">Höhe<span></span><input type="number" id="sheetH" min="50" max="2000" step="1"></label>
+    <label class="row">Rand<span></span><input type="number" id="margin" min="0" max="50" step="0.5"></label>
+    <label class="row">Abstand<span></span><input type="number" id="spacing" min="0" max="20" step="0.5"></label>
+    <label class="row2">Falzlinien<select id="foldStyle">
+      <option value="layer">eigene Ebene (Rillen/Ritzen)</option>
+      <option value="perf">Perforation (Strich-Schnitt)</option>
+    </select></label>
+    <label class="row">Perf. Schnitt<span></span><input type="number" id="perfCut" min="0.5" max="10" step="0.5"></label>
+    <label class="row">Perf. Steg<span></span><input type="number" id="perfGap" min="0.3" max="10" step="0.1"></label>
+    <p class="hint">Nutzbare Schneidfläche am eigenen Gerät prüfen (Schneidematte/Bett). Bogen­vorgaben sind Startwerte.</p>
+  </fieldset>
+  <fieldset>
+    <legend>Export (SVG 1:1)</legend>
+    <div class="btns">
+      <button class="primary" id="expPiece">Einzelzuschnitt</button>
+      <button class="primary" id="expSheet">Bogen (Nesting)</button>
+      <button id="expJson">Parameter JSON</button>
+    </div>
+    <p class="hint">Ebenen: <b style="color:var(--cut)">Schnitt</b> (rot), <b style="color:var(--fold)">Falz</b> (blau), Info (grün, nicht schneiden).</p>
+  </fieldset>
+</aside>
+<main>
+  <nav class="tabs" id="tabs">
+    <button data-t="net" class="on">Schnittmuster</button>
+    <button data-t="fold">3D-Faltung</button>
+    <button data-t="nest">Nesting</button>
+    <button data-t="guide">Faltanleitung</button>
+    <button data-t="check">Prüfung</button>
+    <button data-t="compare">Variantenvergleich</button>
+    <button data-t="research">Recherche &amp; Konzepte</button>
+  </nav>
+
+  <section class="tab on" id="tab-net">
+    <div class="stats" id="netStats"></div>
+    <div class="view" id="netView"></div>
+    <div class="legend">
+      <span><i style="border-color:var(--cut)"></i>Schnitt</span>
+      <span><i style="border-color:var(--fold);border-top-style:dashed"></i>Falz (nach innen = Tal von innen)</span>
+      <span>Ansicht: Innenseite des Zuschnitts</span>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-fold">
+    <div class="ctrl3d">
+      <button id="play">▶ Falten</button>
+      <input type="range" id="foldT" min="0" max="1" step="0.01" value="1">
+      <span id="foldLabel" class="badge"></span>
+      <button id="viewFront">Front</button>
+      <button id="viewIso">Iso</button>
+      <button id="viewBack">Rück</button>
+    </div>
+    <div class="view"><canvas id="c3d"></canvas></div>
+    <p class="hint">Ziehen = drehen. Die gefaltete Form wird aus dem Schnittmuster durch Rotation um die Falzlinien berechnet (kein separat gezeichnetes Modell). Zungen/Haken werden zur Verdeutlichung um die Materialstärke versetzt dargestellt.</p>
+  </section>
+
+  <section class="tab" id="tab-nest">
+    <div class="stats" id="nestStats"></div>
+    <div class="view" id="nestView"><p class="busy" style="padding:14px">Berechnung …</p></div>
+    <p class="hint">Verfahren: Rasterisierung des Zuschnitts, exakte Berechnung aller kollisionsfreien Versätze (Kollisionsraum), Suche des dichtesten Gitters (ineinandergreifende Zuschnitte) und anschliessendes Auffüllen mit Bottom-Left-Fill in 4 Drehlagen. Gewählt wird das bessere aus Gitter+Auffüllen und reinem Bottom-Left-Fill.</p>
+  </section>
+
+  <section class="tab" id="tab-guide">
+    <div class="guide" id="guide"></div>
+  </section>
+
+  <section class="tab" id="tab-check">
+    <ul class="checks" id="checks"></ul>
+    <h3>Noch durch physische Prototypen zu prüfen</h3>
+    <ul id="protoList"></ul>
+  </section>
+
+  <section class="tab" id="tab-compare">
+    <div class="btns" style="margin-bottom:10px"><button id="runCompare" class="primary">Vergleich für aktuelle Masse berechnen</button><span class="hint" id="cmpInfo"></span></div>
+    <div id="compare"></div>
+  </section>
+
+  <section class="tab" id="tab-research">
+    <div class="prose" id="research"></div>
+  </section>
+</main>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   KERN: Geometrie, Faltsimulation, Prüfung, Nesting (ohne DOM)
+   ===================================================================== */
+const SQ2 = Math.SQRT2;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const V2 = {
+  add: (a, b) => [a[0] + b[0], a[1] + b[1]],
+  sub: (a, b) => [a[0] - b[0], a[1] - b[1]],
+  mul: (a, k) => [a[0] * k, a[1] * k],
+  dot: (a, b) => a[0] * b[0] + a[1] * b[1],
+  cr: (a, b) => a[0] * b[1] - a[1] * b[0],
+  len: a => Math.hypot(a[0], a[1]),
+  nrm: a => { const l = Math.hypot(a[0], a[1]) || 1; return [a[0] / l, a[1] / l]; }
+};
+function areaS(P) { let s = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; s += p[0] * q[1] - q[0] * p[1]; } return s / 2; }
+function centroid(P) {
+  const A = areaS(P);
+  if (Math.abs(A) < 1e-9) { let x = 0, y = 0; P.forEach(p => { x += p[0]; y += p[1]; }); return [x / P.length, y / P.length]; }
+  let cx = 0, cy = 0;
+  for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length], f = p[0] * q[1] - q[0] * p[1]; cx += (p[0] + q[0]) * f; cy += (p[1] + q[1]) * f; }
+  return [cx / (6 * A), cy / (6 * A)];
+}
+function pip(pt, P) {
+  let ins = false;
+  for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+    const xi = P[i][0], yi = P[i][1], xj = P[j][0], yj = P[j][1];
+    if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) ins = !ins;
+  }
+  return ins;
+}
+function clipHP(P, n, c) { // behalte dot(n,p) <= c
+  const out = [];
+  for (let i = 0; i < P.length; i++) {
+    const cur = P[i], prev = P[(i + P.length - 1) % P.length];
+    const dc = V2.dot(n, cur) - c, dp = V2.dot(n, prev) - c;
+    const X = () => V2.add(prev, V2.mul(V2.sub(cur, prev), dp / (dp - dc)));
+    if (dc <= 1e-12) { if (dp > 1e-12) out.push(X()); out.push(cur); }
+    else if (dp <= 1e-12) out.push(X());
+  }
+  return out;
+}
+function halfPlanes(P) {
+  const s = Math.sign(areaS(P)), H = [];
+  for (let i = 0; i < P.length; i++) {
+    const p = P[i], q = P[(i + 1) % P.length], d = V2.sub(q, p);
+    if (V2.len(d) < 1e-9) continue;
+    const n = s > 0 ? V2.nrm([d[1], -d[0]]) : V2.nrm([-d[1], d[0]]);
+    H.push({ n, c: V2.dot(n, p), p, q, d: V2.nrm(d) });
+  }
+  return H;
+}
+function insideInset(pt, H, m) { return H.every(h => V2.dot(h.n, pt) <= h.c - m + 1e-9); }
+
+/* ---------- Varianten & Material ---------- */
+const VARIANTS = {
+  windrad: { name: 'A · Windrad-Gehrung', short: 'Windrad',
+    desc: 'Jede Rahmenlasche trägt an der im Uhrzeigersinn folgenden Gehrung eine Zunge, die unter die nächste Lasche greift. Die letzte Zunge wird unter die erste geschoben – zyklische Verriegelung wie beim Windrad-/Twist-Verschluss. Minimaler Materialzusatz.' },
+  webecke: { name: 'B · Verschränkte Gehrung (Webecke)', short: 'Webecke',
+    desc: 'Jede Ecke ist einzeln verriegelt: Die Seitenlasche schiebt aussen eine Zunge unter die Deckel-/Bodenlasche, diese innen eine Zunge unter die Seitenlasche (Über-Unter wie beim Weben). Ecken unabhängig, Deckel einzeln zu öffnen.' },
+  puzzle: { name: 'C · Puzzle-Gehrung', short: 'Puzzle',
+    desc: 'Die Gehrungsfugen sind als Puzzle-Hinterschnitt geschnitten: Ein Knopf der Deckel-/Bodenlasche wird in die Seitenlasche gedrückt. Formschluss in der Rahmenebene, die Fuge selbst wird zum sichtbaren Detail.' },
+  haken: { name: 'D · Pfeillasche & Schlitz', short: 'Haken',
+    desc: 'Pfeilförmige Laschen an den Gehrungen von Deckel- und Bodenlasche werden durch Schlitze der Seitenlaschen gesteckt. Die Widerhaken sperren in allen drei Richtungen – stärkster Verschluss, für Karton.' },
+  faltecke: { name: 'E · Origami-Faltecke + Windrad', short: 'Faltecke',
+    desc: 'Die Eckquadrate werden nicht weggeschnitten, sondern als Dreiecksfalte (Masu-/Gusset-Prinzip) nach innen gelegt: geschlossene Kanten, fast rechteckiger Zuschnitt, dafür mehr Material. Rahmen mit Windradverriegelung.' }
+};
+const MATERIALS = {
+  pack80: { name: 'Packpapier 80 g/m²', t: 0.10, gsm: 80, color: '#c9a27e' },
+  kraft120: { name: 'Kraftpapier 120 g/m²', t: 0.15, gsm: 120, color: '#c39a73' },
+  karton250: { name: 'Faltschachtelkarton 250 g/m²', t: 0.30, gsm: 250, color: '#ece6da' },
+  karton350: { name: 'Karton 350 g/m²', t: 0.45, gsm: 350, color: '#e6ded0' },
+  custom: { name: 'Eigene Angabe', t: null, gsm: null, color: '#ddd2bf' }
+};
+const SHEETS = {
+  a4: { name: 'A4 quer 297×210', W: 297, H: 210 },
+  mat12: { name: 'Schneidematte 12″ 305×305', W: 305, H: 305 },
+  a3: { name: 'A3 quer 420×297', W: 420, H: 297 },
+  custom: { name: 'Eigene Grösse', W: null, H: null }
+};
+const QUAL = { // qualitative Einschätzung 1..5 (Begründung in der Recherche)
+  windrad: { stab: 3, mont: 4, versch: 3, wieder: 4, aest: 4 },
+  webecke: { stab: 4, mont: 2, versch: 4, wieder: 3, aest: 4 },
+  puzzle: { stab: 3, mont: 4, versch: 3, wieder: 3, aest: 5 },
+  haken: { stab: 5, mont: 3, versch: 5, wieder: 3, aest: 3 },
+  faltecke: { stab: 4, mont: 2, versch: 3, wieder: 4, aest: 3 }
+};
+function paperSuit(v, t) { // 1..5 Eignung für Materialstärke
+  const f = {
+    windrad: t <= 0.2 ? 5 : t <= 0.35 ? 4 : t <= 0.5 ? 3 : 1,
+    webecke: t <= 0.2 ? 5 : t <= 0.3 ? 4 : t <= 0.45 ? 2 : 1,
+    puzzle: t < 0.15 ? 1 : t < 0.25 ? 3 : t <= 0.5 ? 5 : 4,
+    haken: t < 0.13 ? 1 : t < 0.22 ? 3 : t <= 0.6 ? 5 : 4,
+    faltecke: t <= 0.15 ? 5 : t <= 0.25 ? 4 : t <= 0.35 ? 2 : 1
+  };
+  return f[v];
+}
+const PROTO = {
+  common: [
+    'Rill-/Falzqualität: Rillen mit Messer-Halbschnitt, Prägestift oder Perforation – welche Einstellung bricht die Deckschicht nicht?',
+    'Faserlaufrichtung: Wandfalze möglichst parallel zur Faser legen; Einfluss auf Rückfederung der Wände prüfen.',
+    'Rückfederung der 90°-Falze: Öffnet sich der Rahmen ohne Produkt von selbst?',
+    'Minimale schneidbare Details am Plotter (Radien, Schlitzlängen, schmale Stege) mit Testmuster bestimmen.',
+    'Massgenauigkeit: Innenmass mit realem Produkt prüfen (Falzzugabe = t ist ein Modellansatz).'
+  ],
+  windrad: ['Haltekraft der Zungen gegen Aufspringen bei Druck des Produkts von innen.', 'Montierbarkeit der letzten Zunge bei steifem Karton (Knickgefahr).', 'Rahmen-Gleiten: Die Zungen sperren nur senkrecht zur Rahmenebene – kippt eine Wand nach aussen?'],
+  webecke: ['Einfädeln der inneren Zungen ohne Knick der Lascheninnenkanten.', 'Verschleiss nach 10 Öffnungszyklen.'],
+  puzzle: ['Einrastkraft und Halt der Knöpfe senkrecht zur Ebene (nur Reibung/Klemmung!).', 'Passung (Spiel) je nach Material und Messerbreite feinjustieren.', 'Ausreissen des Stegs zwischen Puzzlebucht und Falzlinie.'],
+  haken: ['Widerhaken-Halt vs. Einführbarkeit (Pfeilbreite gegen Schlitzlänge).', 'Einreissen an Schlitzenden – ggf. Rundlöcher (Entlastung) an den Enden ergänzen.', 'Verschleiss der Widerhaken beim Wiederöffnen.'],
+  faltecke: ['Liegen die Dreiecksfalten ohne Kleber flach an der Wand oder klappen sie auf?', 'Materialanhäufung (bis 3 Lagen) an den Ecken: Passung des Produkts.', 'Öffnen nur über die Front – genügt das für die Entnahme?']
+};
+
+/* ---------- Konstruktion ---------- */
+function build(P) {
+  const X = +P.X, Y = +P.Y, Z = +P.Z, t = +P.t, V = P.variant;
+  const wMax = Math.max(3, Math.min(X, Y) / 2 - 3);
+  const w = clamp(+P.w, 3, wMax);
+  const a = (X + t) / 2, b = (Y + t) / 2, D = Z + t;            // Mittelflächen-Modell
+  const gus = V === 'faltecke';
+  const tuckOn = !gus && !!P.tuck;
+  const hl = gus ? b : (tuckOn ? b - t : b - t / 2);             // halbe Länge der Seitenwände
+  const g = Math.max(0.25, 0.8 * t);                             // Gehrungsfuge
+  const gg = g / SQ2;
+  const m = Math.max(0.8, 3 * t);                                // Randabstand von Zungen
+  const Lm = w * SQ2;                                            // Gehrungslänge
+  const O = { P: { ...P }, X, Y, Z, t, w, wReq: +P.w, wMax, a, b, D, hl, g, m, Lm, V, gus, tuckOn,
+    panels: [], slits: [], extraFolds: [], fchecks: [], guide: [] };
+  const panels = O.panels;
+  const byId = {};
+  const add = o => { o.dz = o.dz || 0; o.angle = o.angle || 0; o.join = o.join || 'fold'; panels.push(o); byId[o.id] = o; return o; };
+  O.byId = byId;
+
+  // Schrittfolge
+  let s = 1; const st = {};
+  if (tuckOn) st.tuck = s++;
+  if (gus) { st.side = st.tb = s++; } else { st.side = s++; st.tb = s++; }
+  if (V === 'windrad' || V === 'faltecke') { st.top = s++; st.right = s++; st.bottom = s++; st.left = s++; st.lock = s++; }
+  else if (V === 'puzzle') { st.left = st.right = s++; st.top = st.bottom = s++; st.lock = st.top; }
+  else { st.left = st.right = s++; st.top = st.bottom = s++; st.lock = s++; }
+  O.maxStep = s - 1; O.st = st;
+
+  // Rückwand und Wände
+  add({ id: 'back', name: 'Rückwand', kind: 'back', poly: [[-a, -b], [a, -b], [a, b], [-a, b]], parent: null, step: 0 });
+  add({ id: 'wT', name: 'Wand oben', kind: 'wall', poly: [[-a, b], [a, b], [a, b + D], [-a, b + D]], parent: 'back', hinge: [[-a, b], [a, b]], angle: 90, step: st.tb });
+  add({ id: 'wB', name: 'Wand unten', kind: 'wall', poly: [[-a, -b - D], [a, -b - D], [a, -b], [-a, -b]], parent: 'back', hinge: [[a, -b], [-a, -b]], angle: 90, step: st.tb });
+  add({ id: 'wL', name: 'Wand links', kind: 'wall', poly: [[-a - D, -hl], [-a, -hl], [-a, hl], [-a - D, hl]], parent: 'back', hinge: [[-a, -hl], [-a, hl]], angle: 90, step: st.side });
+  add({ id: 'wR', name: 'Wand rechts', kind: 'wall', poly: [[a, -hl], [a + D, -hl], [a + D, hl], [a, hl]], parent: 'back', hinge: [[a, hl], [a, -hl]], angle: 90, step: st.side });
+
+  // Ecken der Front (Frontebene, Blick von vorn, y nach oben)
+  const sideRef = { left: [-a + w / 2, 0], right: [a - w / 2, 0] };
+  const C = {};
+  for (const [k, Co, Ci, tb, side] of [
+    ['TL', [-a, b], [-a + w, b - w], 'top', 'left'], ['TR', [a, b], [a - w, b - w], 'top', 'right'],
+    ['BR', [a, -b], [a - w, -b + w], 'bottom', 'right'], ['BL', [-a, -b], [-a + w, -b + w], 'bottom', 'left']]) {
+    const u = V2.nrm(V2.sub(Ci, Co)); let n = [-u[1], u[0]];
+    if (V2.dot(V2.sub(sideRef[side], Co), n) < 0) n = [u[1], -u[0]];
+    C[k] = { k, Co, Ci, u, n, tb, side };
+  }
+  O.C = C;
+  const toF = (c, s_, q) => [c.Co[0] + c.u[0] * s_ + c.n[0] * q, c.Co[1] + c.u[1] * s_ + c.n[1] * q];
+  const sq = (c, p) => { const d = V2.sub(p, c.Co); return [V2.dot(d, c.u), V2.dot(d, c.n)]; };
+  const feat = { TL: {}, TR: {}, BR: {}, BL: {} };
+
+  if (V === 'puzzle') {
+    const r = clamp(0.16 * w, 1.2, 4.5), hn = 0.58 * r, cl = 0.12 + 0.3 * t;
+    const hq = Math.sqrt((r + cl / 2) ** 2 - (hn + cl / 2) ** 2);
+    const qc = g / 2 + 0.5 + hq, sc = g / 2 + Lm / 2;
+    for (const k in feat) feat[k].knob = { sc, r, hn, qc, cl };
+    O.knob = { r, hn, cl, qc };
+  }
+  function knobPts(sc, q0, qc, r, hn) {
+    const hq = Math.sqrt(Math.max(0, r * r - hn * hn)), qj = qc - hq;
+    const pts = [[sc - hn, q0], [sc - hn, qj]];
+    const a1 = Math.atan2(-hq, -hn), a2 = Math.atan2(-hq, hn) - 2 * Math.PI, N = 28;
+    for (let i = 1; i < N; i++) { const th = a1 + (a2 - a1) * i / N; pts.push([sc + r * Math.cos(th), qc + r * Math.sin(th)]); }
+    pts.push([sc + hn, qj], [sc + hn, q0]);
+    return pts;
+  }
+  function profile(c, which, withFeat) {
+    const q0 = which === 'tb' ? -g / 2 : g / 2;
+    const pts = [[g / 2, q0]];
+    const f = feat[c.k];
+    if (withFeat && f.knob) {
+      const k = f.knob, sg = which === 'tb' ? -1 : 1;
+      pts.push(...knobPts(k.sc, q0, k.qc, k.r + sg * k.cl / 2, k.hn + sg * k.cl / 2));
+    }
+    pts.push([Lm + g / 2, q0]);
+    return pts.map(([s_, q]) => toF(c, s_, q));
+  }
+  const FL = { top: { c1: 'TL', c2: 'TR', wall: 'wT', wh: 'tb', nm: 'Rahmen oben' }, right: { c1: 'TR', c2: 'BR', wall: 'wR', wh: 'side', nm: 'Rahmen rechts' },
+    bottom: { c1: 'BR', c2: 'BL', wall: 'wB', wh: 'tb', nm: 'Rahmen unten' }, left: { c1: 'BL', c2: 'TL', wall: 'wL', wh: 'side', nm: 'Rahmen links' } };
+  const toNet = { top: p => [p[0], 2 * b + D - p[1]], bottom: p => [p[0], -2 * b - D - p[1]], left: p => [-2 * a - D - p[0], p[1]], right: p => [2 * a + D - p[0], p[1]] };
+  O.toNet = toNet;
+  const plainFront = {};
+  for (const nm in FL) {
+    const f = FL[nm];
+    const front = [...profile(C[f.c2], f.wh, true), ...profile(C[f.c1], f.wh, true).reverse()];
+    plainFront[nm] = [...profile(C[f.c2], f.wh, false), ...profile(C[f.c1], f.wh, false).reverse()];
+    let h0 = toF(C[f.c1], g / 2, f.wh === 'tb' ? -g / 2 : g / 2), h1 = toF(C[f.c2], g / 2, f.wh === 'tb' ? -g / 2 : g / 2);
+    if (f.wh === 'side') { h0 = [h0[0], clamp(h0[1], -hl, hl)]; h1 = [h1[0], clamp(h1[1], -hl, hl)]; }
+    add({ id: 'f_' + nm, name: f.nm, kind: 'frame', side: nm, poly: front.map(toNet[nm]), front, parent: f.wall, hinge: [toNet[nm](h0), toNet[nm](h1)], angle: 90, step: st[nm] });
+  }
+  O.plainFront = plainFront;
+
+  const isMiterEdge = (h, c) => Math.abs(V2.cr(h.d, c.u)) < 1e-6 && Math.abs(V2.cr(c.u, V2.sub(h.p, c.Co))) < g + 1e-6;
+  function addTongue(ck, from, f0, f1, e, id) {
+    const c = C[ck], sig = from === 'tb' ? 1 : -1;
+    const s0 = g / 2 + f0 * Lm, s1 = g / 2 + f1 * Lm, tp = Math.min(0.7 * e, (s1 - s0) / 3);
+    let poly = [[s0, -sig * g / 2], [s1, -sig * g / 2], [s1 - tp, sig * e], [s0 + tp, sig * e]].map(([s_, q]) => toF(c, s_, q));
+    const nb = from === 'tb' ? c.side : c.tb, own = from === 'tb' ? c.tb : c.side;
+    for (const h of halfPlanes(plainFront[nb])) { if (isMiterEdge(h, c)) continue; poly = clipHP(poly, h.n, h.c - m); if (poly.length < 3) return null; }
+    const qb = -sig * g / 2; let seg = null, best = 0;
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i], q = poly[(i + 1) % poly.length];
+      if (Math.abs(sq(c, p)[1] - qb) < 1e-6 && Math.abs(sq(c, q)[1] - qb) < 1e-6 && V2.len(V2.sub(q, p)) > best) { best = V2.len(V2.sub(q, p)); seg = [p, q]; }
+    }
+    if (!seg) return null;
+    const area = Math.abs(areaS(poly));
+    // maximale Eindringtiefe senkrecht zur Gehrung
+    let depth = 0; poly.forEach(p => { depth = Math.max(depth, sig * sq(c, p)[1]); });
+    O.fchecks.push({ type: 'tongue', id, area, depth, corner: ck });
+    return add({ id, corner: ck, name: 'Zunge ' + ck, kind: 'tongue', poly: poly.map(toNet[own]), front: poly, nb, own, parent: 'f_' + own, join: 'merge', hinge: seg.map(toNet[own]), step: st.lock, dz: t + 0.25 });
+  }
+
+  if (V === 'windrad' || V === 'faltecke') {
+    const e = clamp(0.45 * w, 2, 8);
+    addTongue('TR', 'tb', 0.3, 0.95, e, 'tg_TR');
+    addTongue('BR', 'side', 0.3, 0.95, e, 'tg_BR');
+    addTongue('BL', 'tb', 0.3, 0.95, e, 'tg_BL');
+    addTongue('TL', 'side', 0.3, 0.95, e, 'tg_TL');
+  }
+  if (V === 'webecke') {
+    const e = clamp(0.4 * w, 2, 7);
+    for (const k of ['TL', 'TR', 'BR', 'BL']) {
+      addTongue(k, 'tb', 0.55, 0.96, e, 'ti_' + k);
+      addTongue(k, 'side', 0.18, 0.5, e, 'to_' + k);
+    }
+  }
+  if (V === 'haken') {
+    const nk = clamp(0.24 * w, 1.8, 6), cl = 0.2 + t / 2, SL = nk + 2 * cl;
+    const sc = g / 2 + Lm / 2, qs = g / 2 + clamp(0.18 * w, 1.5, 4), sh = Math.max(0.4, 1.5 * t), mm = m * SQ2 + 0.1;
+    // Pfeilkopf so gross wie möglich, aber innerhalb der Seitenlasche (Randabstand m zur Falzkante)
+    const H = Math.min(clamp(0.46 * w, SL + 0.8, 10), 2 * (sc - qs - sh - mm));
+    const tipw = 0.5 * nk, hh = Math.max(0.8, Math.min(clamp(0.3 * w, 2.2, 6), sc - tipw / 2 - mm - qs - sh));
+    O.hook = { nk, SL, H, qs, sh, hh, barb: (H - SL) / 2 };
+    for (const k of ['TL', 'TR', 'BR', 'BL']) {
+      const c = C[k], own = c.tb, nb = c.side;
+      const neck = [[sc - nk / 2, -g / 2], [sc + nk / 2, -g / 2], [sc + nk / 2, qs], [sc - nk / 2, qs]].map(([s_, q]) => toF(c, s_, q));
+      const head = [[sc - nk / 2, qs], [sc + nk / 2, qs], [sc + nk / 2, qs + sh], [sc + H / 2, qs + sh], [sc + tipw / 2, qs + sh + hh], [sc - tipw / 2, qs + sh + hh], [sc - H / 2, qs + sh], [sc - nk / 2, qs + sh]].map(([s_, q]) => toF(c, s_, q));
+      add({ id: 'hn_' + k, name: 'Lasche ' + k, kind: 'tab', poly: neck.map(toNet[own]), front: neck, own, parent: 'f_' + own, join: 'merge', hinge: [neck[0], neck[1]].map(toNet[own]), step: st.lock, dz: -(t + 0.25) });
+      add({ id: 'hh_' + k, corner: k, name: 'Pfeil ' + k, kind: 'tab', poly: head.map(toNet[own]), front: head, nb, own, parent: 'hn_' + k, join: 'merge', hinge: [head[0], head[1]].map(toNet[own]), step: st.lock, dz: (t + 0.25) * 2, isHead: true });
+      const sl = [toF(c, sc - SL / 2, qs), toF(c, sc + SL / 2, qs)];
+      O.slits.push({ seg: sl.map(toNet[nb]), front: sl, side: nb, corner: k });
+      const Hs = halfPlanes(plainFront[nb]);
+      const okHead = head.slice(2).every(p => insideInset(p, Hs, m));
+      O.fchecks.push({ type: 'hook', corner: k, okHead });
+    }
+  }
+  if (V === 'puzzle') {
+    for (const k of ['TL', 'TR', 'BR', 'BL']) {
+      const c = C[k], kn = feat[k].knob;
+      const sock = knobPts(kn.sc, g / 2, kn.qc, kn.r + kn.cl / 2, kn.hn + kn.cl / 2).map(([s_, q]) => toF(c, s_, q));
+      const Hs = halfPlanes(plainFront[c.side]).filter(h => !isMiterEdge(h, c));
+      let minBridge = Infinity;
+      sock.forEach(p => Hs.forEach(h => { minBridge = Math.min(minBridge, h.c - V2.dot(h.n, p)); }));
+      O.fchecks.push({ type: 'knob', corner: k, minBridge });
+    }
+  }
+
+  // Eckzungen
+  if (tuckOn) {
+    const autoD = clamp(0.28 * X, 5, 15);
+    let d = +P.tuckD > 0 ? +P.tuckD : autoD;
+    d = Math.min(d, a - 1.5);
+    const zs = t, ze = D - 1.5 * t, tp = Math.max(0, Math.min(0.6 * d, (ze - zs) / 2 - 0.5));
+    O.tuckD = d;
+    for (const [sx, sy, wall] of [[-1, 1, 'wL'], [-1, -1, 'wL'], [1, 1, 'wR'], [1, -1, 'wR']]) {
+      const X0 = sx * (a + zs), X1 = sx * (a + ze), Y0 = sy * hl, Y1 = sy * (hl + d), XT0 = sx * (a + zs + tp), XT1 = sx * (a + ze - tp);
+      add({ id: `tk_${sx}_${sy}`, name: 'Eckzunge', kind: 'tuck', poly: [[X0, Y0], [X1, Y0], [XT1, Y1], [XT0, Y1]], parent: wall, hinge: [[X0, Y0], [X1, Y0]], angle: 90, step: st.tuck, sx, sy });
+    }
+  }
+  // Origami-Faltecken
+  if (gus) {
+    const onSide = Y >= X; O.gussetOn = onSide ? 'side' : 'tb';
+    for (const [sx, sy] of [[-1, 1], [1, 1], [1, -1], [-1, -1]]) {
+      const K = [sx * a, sy * b], Fs = [sx * (a + D), sy * b], Tip = [sx * (a + D), sy * (b + D)], Ft = [sx * a, sy * (b + D)];
+      const Ts = [K, Fs, Tip], Tt = [K, Tip, Ft];
+      const sideW = sx < 0 ? 'wL' : 'wR', tbW = sy > 0 ? 'wT' : 'wB', id = `${sx}_${sy}`;
+      if (onSide) {
+        add({ id: 'gs_' + id, name: 'Faltecke', kind: 'gusset', poly: Ts, parent: sideW, hinge: [K, Fs], angle: 180, step: st.side, dz: -(t + 0.2) });
+        add({ id: 'gt_' + id, name: 'Faltecke', kind: 'gusset', poly: Tt, parent: 'gs_' + id, hinge: [K, Tip], angle: -180, step: st.side, dz: 2 * (t + 0.2) });
+        O.extraFolds.push({ seg: [K, Ft], a: 'gt_' + id, b: tbW });
+      } else {
+        add({ id: 'gt_' + id, name: 'Faltecke', kind: 'gusset', poly: Tt, parent: tbW, hinge: [K, Ft], angle: 180, step: st.side, dz: -(t + 0.2) });
+        add({ id: 'gs_' + id, name: 'Faltecke', kind: 'gusset', poly: Ts, parent: 'gt_' + id, hinge: [K, Tip], angle: -180, step: st.side, dz: 2 * (t + 0.2) });
+        O.extraFolds.push({ seg: [K, Fs], a: 'gs_' + id, b: sideW });
+      }
+    }
+  }
+
+  // Drehsinn je Falz bestimmen (Talfalz zur Innenseite = +z im Netz)
+  for (const p of panels) {
+    if (!p.parent) continue;
+    const h = V2.nrm(V2.sub(p.hinge[1], p.hinge[0])), v = V2.sub(centroid(p.poly), p.hinge[0]);
+    p.sgn = Math.sign(h[0] * v[1] - h[1] * v[0]) || 1;
+  }
+
+  // Schnitt- und Falzlinien
+  const joins = panels.filter(p => p.parent).map(p => ({ seg: p.hinge, type: p.join }));
+  O.extraFolds.forEach(e => joins.push({ seg: e.seg, type: 'fold' }));
+  O.folds = joins.filter(j => j.type === 'fold').map(j => j.seg);
+  const cuts = [];
+  for (const p of panels) {
+    for (let i = 0; i < p.poly.length; i++) {
+      let pieces = [[p.poly[i], p.poly[(i + 1) % p.poly.length]]];
+      for (const j of joins) pieces = subtractSeg(pieces, j.seg);
+      for (const c of cuts) { if (!pieces.length) break; pieces = subtractSeg(pieces, c); }
+      pieces.forEach(sg => { if (V2.len(V2.sub(sg[1], sg[0])) > 1e-4) cuts.push(sg); });
+    }
+  }
+  O.cutSegs = cuts;
+  O.cutPolylines = chainSegments([...cuts, ...O.slits.map(s_ => s_.seg)]);
+
+  // Kennzahlen
+  let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity, area = 0;
+  for (const p of panels) { area += Math.abs(areaS(p.poly)); p.poly.forEach(q => { minx = Math.min(minx, q[0]); maxx = Math.max(maxx, q[0]); miny = Math.min(miny, q[1]); maxy = Math.max(maxy, q[1]); }); }
+  O.bbox = { minx, miny, maxx, maxy, w: maxx - minx, h: maxy - miny };
+  O.area = area;
+  O.cutLen = cuts.reduce((s_, c) => s_ + V2.len(V2.sub(c[1], c[0])), 0) + O.slits.reduce((s_, c) => s_ + V2.len(V2.sub(c.seg[1], c.seg[0])), 0);
+  O.foldLen = O.folds.reduce((s_, c) => s_ + V2.len(V2.sub(c[1], c[0])), 0);
+  O.opening = [2 * a - 2 * w, 2 * b - 2 * w];
+  O.mass = area * 1e-6 * (+P.gsm || 0);
+  O.guide = makeGuide(O);
+  return O;
+}
+
+function subtractSeg(pieces, seg) {
+  const out = [];
+  for (const pc of pieces) {
+    const [p, q] = pc, d = V2.sub(q, p), L = V2.len(d);
+    if (L < 1e-9) continue;
+    const u = V2.mul(d, 1 / L);
+    const da = Math.abs(V2.cr(u, V2.sub(seg[0], p))), db = Math.abs(V2.cr(u, V2.sub(seg[1], p)));
+    if (da > 1e-5 || db > 1e-5) { out.push(pc); continue; }
+    let t0 = V2.dot(V2.sub(seg[0], p), u), t1 = V2.dot(V2.sub(seg[1], p), u);
+    if (t0 > t1) [t0, t1] = [t1, t0];
+    if (t1 <= 1e-6 || t0 >= L - 1e-6) { out.push(pc); continue; }
+    if (t0 > 1e-6) out.push([p, V2.add(p, V2.mul(u, t0))]);
+    if (t1 < L - 1e-6) out.push([V2.add(p, V2.mul(u, t1)), q]);
+  }
+  return out;
+}
+function chainSegments(segs) {
+  const key = p => Math.round(p[0] * 1000) + ',' + Math.round(p[1] * 1000);
+  const map = new Map(), used = new Array(segs.length).fill(false);
+  segs.forEach((s, i) => { for (const e of [0, 1]) { const k = key(s[e]); if (!map.has(k)) map.set(k, []); map.get(k).push([i, e]); } });
+  const lines = [];
+  const next = (pt) => { const l = map.get(key(pt)) || []; for (const [i, e] of l) if (!used[i]) return [i, e]; return null; };
+  for (let i = 0; i < segs.length; i++) {
+    if (used[i]) continue;
+    used[i] = true; let line = [segs[i][0], segs[i][1]];
+    let n; while ((n = next(line[line.length - 1]))) { used[n[0]] = true; line.push(segs[n[0]][1 - n[1]]); }
+    while ((n = next(line[0]))) { used[n[0]] = true; line.unshift(segs[n[0]][1 - n[1]]); }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/* ---------- Faltanleitung ---------- */
+function makeGuide(O) {
+  const st = O.st, V = O.V, G = [];
+  G.push({ T: 0, title: 'Zuschneiden', text: 'Schnitt-Ebene schneiden, Falz-Ebene rillen oder perforieren. Alle Falze knicken zur Innenseite (Ansicht = Innenseite). Vorher jeden Falz einmal vorbrechen.' });
+  if (O.tuckOn) G.push({ T: st.tuck, title: 'Eckzungen falten', text: 'Die vier Eckzungen an den Enden der Seitenwände 90° zur Innenseite falten.' });
+  if (O.gus) G.push({ T: st.side, title: 'Wände und Faltecken', text: 'Alle vier Wände aufstellen. Jedes Eckquadrat entlang der Diagonale nach innen einknicken und die Doppel-Dreiecke flach an die ' + (O.gussetOn === 'side' ? 'Seitenwände' : 'obere/untere Wand') + ' legen.' });
+  else {
+    G.push({ T: st.side, title: 'Seitenwände aufstellen', text: 'Linke und rechte Wand 90° aufstellen' + (O.tuckOn ? ' – die Eckzungen zeigen nach innen.' : '.') });
+    G.push({ T: st.tb, title: 'Ober- und Unterwand schliessen', text: 'Obere und untere Wand aufstellen' + (O.tuckOn ? ', dabei die Eckzungen innen anliegen lassen.' : '.') + ' Produkt jetzt einlegen.' });
+  }
+  if (V === 'windrad' || V === 'faltecke') {
+    G.push({ T: st.top, title: 'Rahmen oben', text: 'Obere Rahmenlasche nach innen auf die Front legen. Ihre Zunge (rechts) liegt frei.' });
+    G.push({ T: st.right, title: 'Rahmen rechts', text: 'Rechte Lasche über die Zunge der oberen Lasche legen.' });
+    G.push({ T: st.bottom, title: 'Rahmen unten', text: 'Untere Lasche über die Zunge der rechten Lasche legen.' });
+    G.push({ T: st.left, title: 'Rahmen links', text: 'Linke Lasche über die Zunge der unteren Lasche legen.' });
+    G.push({ T: st.lock, title: 'Windrad schliessen', text: 'Innenecke oben links leicht anheben und die Zunge der linken Lasche darunterschieben. Alle vier Laschen halten sich nun gegenseitig.' });
+  } else if (V === 'webecke') {
+    G.push({ T: st.left, title: 'Seitenlaschen', text: 'Linke und rechte Rahmenlasche einklappen. Ihre äusseren Zungen ragen in die Deckel-/Bodenzone.' });
+    G.push({ T: st.top, title: 'Deckel- und Bodenlasche', text: 'Obere und untere Lasche einklappen – sie decken die äusseren Zungen ab.' });
+    G.push({ T: st.lock, title: 'Ecken verweben', text: 'An jeder Ecke die Innenecke der Seitenlasche leicht anheben und die innere Zunge darunterschieben.' });
+  } else if (V === 'puzzle') {
+    G.push({ T: st.left, title: 'Seitenlaschen', text: 'Linke und rechte Rahmenlasche einklappen (mit Puzzle-Buchten).' });
+    G.push({ T: st.top, title: 'Puzzle eindrücken', text: 'Obere und untere Lasche einklappen und die Knöpfe mit dem Daumen von vorn in die Buchten drücken.' });
+  } else if (V === 'haken') {
+    G.push({ T: st.left, title: 'Seitenlaschen', text: 'Linke und rechte Rahmenlasche (mit Schlitzen) einklappen.' });
+    G.push({ T: st.top, title: 'Deckel- und Bodenlasche', text: 'Obere und untere Lasche einklappen; die Pfeillaschen liegen über den Schlitzen.' });
+    G.push({ T: st.lock, title: 'Pfeile einstecken', text: 'Pfeilspitzen leicht zusammenrollen, durch die Schlitze stecken und loslassen – die Widerhaken greifen hinter die Seitenlasche.' });
+  }
+  G.push({ T: O.maxStep, title: 'Öffnen & Wiederverschliessen', text: (O.gus ? 'Verriegelung lösen und die Rahmenlaschen nach aussen klappen: die ganze Front ist offen.' : 'Verriegelung oben lösen, obere Rahmenlasche hochklappen – die obere Wand öffnet als Deckel (Scharnier an der Rückwand). Schliessen in umgekehrter Reihenfolge.') });
+  return G;
+}
+
+/* ---------- 3D-Faltung ---------- */
+const I3 = { R: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], t: [0, 0, 0] };
+const mv = (R, v) => [R[0][0] * v[0] + R[0][1] * v[1] + R[0][2] * v[2], R[1][0] * v[0] + R[1][1] * v[1] + R[1][2] * v[2], R[2][0] * v[0] + R[2][1] * v[1] + R[2][2] * v[2]];
+const mm3 = (A, B) => A.map((r, i) => [0, 1, 2].map(j => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
+const compose = (A, B) => { const r = mv(A.R, B.t); return { R: mm3(A.R, B.R), t: [r[0] + A.t[0], r[1] + A.t[1], r[2] + A.t[2]] }; };
+const ap = (M, p) => { const r = mv(M.R, p); return [r[0] + M.t[0], r[1] + M.t[1], r[2] + M.t[2]]; };
+function rod(k, th) {
+  const [x, y, z] = k, c = Math.cos(th), s = Math.sin(th), C = 1 - c;
+  return [[c + x * x * C, x * y * C - z * s, x * z * C + y * s], [y * x * C + z * s, c + y * y * C, y * z * C - x * s], [z * x * C - y * s, z * y * C + x * s, c + z * z * C]];
+}
+function hingeMat(p, deg) {
+  const h = V2.nrm(V2.sub(p.hinge[1], p.hinge[0])), th = p.sgn * deg * Math.PI / 180;
+  const R = rod([h[0], h[1], 0], th), P = [p.hinge[0][0], p.hinge[0][1], 0], RP = mv(R, P);
+  return { R, t: [P[0] - RP[0], P[1] - RP[1], -RP[2]] };
+}
+const smooth = x => x * x * (3 - 2 * x);
+function worldMats(O, T) {
+  const M = {}, prog = {};
+  for (const p of O.panels) {
+    if (!p.parent) { M[p.id] = I3; prog[p.id] = 1; continue; }
+    const e = smooth(clamp(T - (p.step - 1), 0, 1));
+    prog[p.id] = e;
+    let mat = M[p.parent];
+    if (p.join === 'fold' && p.angle) mat = compose(mat, hingeMat(p, p.angle * e));
+    M[p.id] = mat;
+  }
+  return { M, prog };
+}
+function worldPolys(O, T, withDz) {
+  const { M, prog } = worldMats(O, T);
+  return O.panels.map(p => ({ p, pts: p.poly.map(q => ap(M[p.id], [q[0], q[1], withDz ? p.dz * prog[p.id] : 0])), n: mv(M[p.id].R, [0, 0, 1]) }));
+}
+
+/* ---------- Prüfung ---------- */
+function rasterCount(polys, box, cell, grid) { // grid: Uint16Array, zählt Belegung (Zellmitten)
+  const W = Math.ceil((box.maxx - box.minx) / cell), H = Math.ceil((box.maxy - box.miny) / cell);
+  for (const P of polys) {
+    let py0 = Infinity, py1 = -Infinity; P.forEach(q => { py0 = Math.min(py0, q[1]); py1 = Math.max(py1, q[1]); });
+    const j0 = Math.max(0, Math.floor((py0 - box.miny) / cell)), j1 = Math.min(H - 1, Math.ceil((py1 - box.miny) / cell));
+    for (let j = j0; j <= j1; j++) {
+      const yc = box.miny + (j + 0.5) * cell, xs = [];
+      for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; if ((p[1] <= yc) !== (q[1] <= yc)) xs.push(p[0] + (yc - p[1]) * (q[0] - p[0]) / (q[1] - p[1])); }
+      xs.sort((u, v) => u - v);
+      for (let k = 0; k + 1 < xs.length; k += 2) {
+        const i0 = Math.max(0, Math.ceil((xs[k] - box.minx) / cell - 0.5)), i1 = Math.min(W - 1, Math.floor((xs[k + 1] - box.minx) / cell - 0.5));
+        for (let i = i0; i <= i1; i++) grid[j * W + i]++;
+      }
+    }
+  }
+  return { W, H };
+}
+function verify(O) {
+  const R = [];
+  const push = (lvl, label, detail) => R.push({ lvl, label, detail });
+  const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2);
+  // Parameter
+  if (O.X > 90 || O.Y > 90 || O.Z > 90) push('fail', 'Maximalmass 90 mm überschritten', `X ${O.X}, Y ${O.Y}, Z ${O.Z}`);
+  else push('pass', 'Innenmasse innerhalb 90 mm', `${O.X} × ${O.Y} × ${O.Z} mm (Innenraum, Mittelflächenmodell mit Falzzugabe t = ${O.t} mm)`);
+  if (O.wReq > O.wMax + 1e-9) push('warn', 'Rahmenbreite begrenzt', `angefragt ${O.wReq} mm, verwendet ${f1(O.w)} mm (max. = min(X,Y)/2 − 3)`);
+  push(O.opening[0] > 4 && O.opening[1] > 4 ? 'pass' : 'fail', 'Frontöffnung durch Zuschnittgeometrie', `lichte Öffnung ≈ ${f1(O.opening[0])} × ${f1(O.opening[1])} mm – keine Fläche wird herausgeschnitten, die Öffnung entsteht zwischen den Trapezlaschen.`);
+
+  // 1. Netz ohne Selbstüberlappung
+  {
+    const bb = O.bbox, ext = Math.max(bb.w, bb.h), cell = clamp(ext / 900, 0.12, 0.5);
+    const box = { minx: bb.minx - 1.0173, miny: bb.miny - 1.0291, maxx: bb.maxx + 1, maxy: bb.maxy + 1 };
+    const W = Math.ceil((box.maxx - box.minx) / cell), H = Math.ceil((box.maxy - box.miny) / cell);
+    const grid = new Uint16Array(W * H);
+    rasterCount(O.panels.map(p => p.poly), box, cell, grid);
+    let ov = 0; for (let i = 0; i < grid.length; i++) if (grid[i] > 1) ov++;
+    const ovA = ov * cell * cell;
+    push(ovA < 0.5 ? 'pass' : 'fail', 'Zuschnitt einteilig und überlappungsfrei', ovA < 0.5 ? `Rastertest ${f2(cell)} mm: keine Überlappung zwischen Teilflächen.` : `${f1(ovA)} mm² Überlappung im flachen Zuschnitt!`);
+  }
+  // 2. Gefalteter Zustand
+  const WP = worldPolys(O, O.maxStep, false), byId = {};
+  WP.forEach(w => { byId[w.p.id] = w; });
+  {
+    const frames = WP.filter(w => w.p.kind === 'frame');
+    let dzmax = 0; frames.forEach(w => w.pts.forEach(q => { dzmax = Math.max(dzmax, Math.abs(q[2] - O.D)); }));
+    push(dzmax < 1e-6 ? 'pass' : 'fail', 'Rahmenlaschen liegen in der Frontebene', `max. Abweichung ${dzmax.toExponential(1)} mm (aus Falzrotation berechnet)`);
+    const cell = 0.08, box = { minx: -O.a - 1.0173, maxx: O.a + 1, miny: -O.b - 1.0291, maxy: O.b + 1 };
+    const W = Math.ceil((box.maxx - box.minx) / cell), H = Math.ceil((box.maxy - box.miny) / cell);
+    const grid = new Uint16Array(W * H);
+    rasterCount(frames.map(w => w.pts.map(q => [q[0], q[1]])), box, cell, grid);
+    let ov = 0; for (let i = 0; i < grid.length; i++) if (grid[i] > 1) ov++;
+    const ovA = ov * cell * cell;
+    push(ovA < 0.05 ? 'pass' : 'fail', 'Rahmenlaschen kollisionsfrei (Gehrungen' + (O.V === 'puzzle' ? ' inkl. Puzzle-Knöpfe' : '') + ')', ovA < 0.05 ? `Gehrungsfuge ${f2(O.g)} mm` + (O.knob ? `, Puzzle-Passungsspiel ${f2(O.knob.cl)} mm` : '') : `${f2(ovA)} mm² Überschneidung in der Frontebene`);
+    // Rahmen deckt Ecken der Wände: Öffnungsmass
+  }
+  // Zungen/Pfeile verdeckt
+  const hidden = WP.filter(w => w.p.kind === 'tongue' || (w.p.kind === 'tab' && w.p.isHead));
+  if (hidden.length) {
+    let worst = 1;
+    for (const w of hidden) {
+      const nb = byId['f_' + w.p.nb].pts.map(q => [q[0], q[1]]), P = w.pts.map(q => [q[0], q[1]]);
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity; P.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+      const c = O.C[w.p.corner];
+      let n = 0, ins = 0;
+      for (let x = x0 + 0.0517; x < x1; x += 0.1) for (let y = y0 + 0.0529; y < y1; y += 0.1) {
+        if (!pip([x, y], P)) continue;
+        const q = V2.dot(V2.sub([x, y], c.Co), c.n);
+        if (Math.abs(q) <= O.g / 2 + 0.02) continue;   // Gehrungsfuge selbst ist offen
+        n++; if (pip([x, y], nb)) ins++;
+      }
+      if (n) worst = Math.min(worst, ins / n);
+    }
+    push(worst > 0.995 ? 'pass' : 'fail', O.V === 'haken' ? 'Pfeilköpfe liegen vollständig hinter den Seitenlaschen' : 'Zungen liegen vollständig unter der Nachbarlasche', `Flächenanteil verdeckt: ${(worst * 100).toFixed(1)} % (min. über alle Ecken)`);
+  }
+  // Wandecken geschlossen
+  {
+    const pairs = [['wT', [-O.a, O.b + O.D], 'wL', [-O.a - O.D, O.hl]], ['wT', [O.a, O.b + O.D], 'wR', [O.a + O.D, O.hl]], ['wB', [-O.a, -O.b - O.D], 'wL', [-O.a - O.D, -O.hl]], ['wB', [O.a, -O.b - O.D], 'wR', [O.a + O.D, -O.hl]]];
+    const { M } = worldMats(O, O.maxStep);
+    let gap = 0; pairs.forEach(([p1, q1, p2, q2]) => { const A = ap(M[p1], [q1[0], q1[1], 0]), B = ap(M[p2], [q2[0], q2[1], 0]); gap = Math.max(gap, Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2])); });
+    const exp = O.b - O.hl;
+    push(Math.abs(gap - exp) < 1e-6 ? 'pass' : 'fail', 'Wände schliessen an den Kanten', `Mittelflächenabstand an den Ecken ${f2(gap)} mm (Soll ${f2(exp)} mm = Lagenversatz)`);
+    if (O.tuckOn) {
+      let bad = 0;
+      WP.filter(w => w.p.kind === 'tuck').forEach(w => w.pts.forEach(q => {
+        const ySoll = w.p.sy * (O.b - O.t);
+        if (Math.abs(q[1] - ySoll) > 1e-6 || q[2] < -1e-6 || q[2] > O.D - O.t / 2 + 1e-6 || Math.abs(q[0]) > O.a + 1e-6) bad++;
+      }));
+      push(bad ? 'fail' : 'pass', 'Eckzungen liegen innen an Ober-/Unterwand', bad ? `${bad} Punkte ausserhalb` : `eine Materialstärke innen, Tiefe ${f1(O.tuckD)} mm, frei von Rückwand und Rahmen`);
+      if (2 * O.tuckD > 2 * O.a - 2) push('warn', 'Eckzungen berühren sich', 'Zungentiefe reduzieren');
+    }
+    if (O.gus) {
+      let dmax = 0;
+      O.extraFolds.forEach(e => { e.seg.forEach(q => { const A = ap(M[e.a], [q[0], q[1], 0]), B = ap(M[e.b], [q[0], q[1], 0]); dmax = Math.max(dmax, Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2])); }); });
+      push(dmax < 1e-6 ? 'pass' : 'fail', 'Faltecken geometrisch geschlossen', `Geschlossener Falzring: Kante Dreieck↔Nachbarwand fällt zusammen (Abw. ${dmax.toExponential(1)} mm)`);
+      const L = O.gussetOn === 'side' ? 2 * O.b : 2 * O.a;
+      if (2 * O.D > L) push('warn', 'Faltecken überlappen sich auf der Wand', `2·(Z+t) = ${f1(2 * O.D)} mm > Wandlänge ${f1(L)} mm → bis zu 4 Lagen`);
+      push('info', 'Innenraum durch Faltecken reduziert', `ca. 2 × 2t = ${f2(4 * O.t)} mm in ${O.gussetOn === 'side' ? 'X' : 'Y'}-Richtung im Bereich der Ecken`);
+    }
+  }
+  // Variantenspezifisch
+  const tg = O.fchecks.filter(c => c.type === 'tongue');
+  if (tg.length) {
+    const minA = Math.min(...tg.map(c => c.area)), minD = Math.min(...tg.map(c => c.depth));
+    push(minA >= 6 && minD >= 1.8 ? 'pass' : minA >= 3 ? 'warn' : 'fail', 'Zungengrösse', `kleinste Zunge ${f1(minA)} mm², Eingriffstiefe ${f1(minD)} mm` + (minD < 1.8 ? ' – Rahmen breiter wählen' : ''));
+  }
+  if (O.V === 'haken') {
+    const h = O.hook, okH = O.fchecks.filter(c => c.type === 'hook').every(c => c.okHead);
+    push(okH ? 'pass' : 'fail', 'Pfeilkopf passt in die Seitenlasche', okH ? `Randabstand ≥ ${f1(O.m)} mm zur Falz- und Innenkante` : 'Pfeilkopf ragt aus der Seitenlasche – Rahmenbreite erhöhen (≥ 10 mm empfohlen)');
+    const minBarb = Math.max(0.4, 1.5 * O.t);
+    push(h.barb >= minBarb ? 'pass' : h.barb > 0 ? 'warn' : 'fail', 'Widerhaken greifen', `Schlitz ${f1(h.SL)} mm, Pfeilbreite ${f1(h.H)} mm → Haken je ${f2(h.barb)} mm (Soll ≥ ${f2(minBarb)} mm)`);
+    push(h.SL >= 2 && h.nk >= 1.8 ? 'pass' : 'warn', 'Schneidbarkeit Schlitz/Hals', `Hals ${f1(h.nk)} mm, Schlitz ${f1(h.SL)} mm (Plotter: ≥ 2 mm empfohlen)`);
+  }
+  if (O.V === 'puzzle') {
+    const k = O.knob, minB = Math.min(...O.fchecks.filter(c => c.type === 'knob').map(c => c.minBridge)), need = Math.max(1.2, 3 * O.t);
+    push(minB >= need ? 'pass' : 'warn', 'Steg hinter Puzzle-Bucht', `${f1(minB)} mm (Soll ≥ ${f1(need)} mm, sonst reisst die Seitenlasche)`);
+    push(k.r >= 1.2 && k.hn * 2 >= 1.4 ? 'pass' : 'warn', 'Hinterschnitt schneidbar', `Kopf-Ø ${f1(2 * k.r)} mm, Hals ${f1(2 * k.hn)} mm, Hinterschnitt ${f2(k.r - k.hn)} mm je Seite`);
+    if (O.t < 0.2) push('warn', 'Puzzle in dünnem Papier', 'Unter ca. 0.2 mm hält der Hinterschnitt senkrecht zur Ebene kaum – Variante A/B bevorzugen.');
+  }
+  if ((O.V === 'windrad' || O.V === 'faltecke') && O.t > 0.45) push('warn', 'Letzte Windradzunge schwer einzuschieben', 'Bei steifem Karton muss die obere Lasche stark gebogen werden.');
+  if (O.V === 'webecke' && O.t > 0.35) push('warn', 'Verweben bei steifem Karton', 'Innenecken müssen angehoben werden; > 0.35 mm Knickgefahr.');
+  if (O.w < 6) push('warn', 'Schmaler Rahmen', 'Unter 6 mm werden Verriegelungen sehr klein; Plotter-Toleranzen dominieren.');
+  // Mechanik-Hinweis
+  const lockInfo = {
+    windrad: 'Sperrt die Laschen senkrecht zur Frontebene (zyklisch). In der Ebene nur Reibung → Prototyp.',
+    webecke: 'Jede Ecke sperrt senkrecht zur Ebene in beide Richtungen; in der Ebene nur Reibung.',
+    puzzle: 'Formschluss in der Rahmenebene (Zug/Schub über die Gehrung); senkrecht nur Klemmung.',
+    haken: 'Formschluss in allen drei Richtungen (Widerhaken hinter Schlitz, Hals im Schlitz geführt).',
+    faltecke: 'Ecken schubsteif durch Faltecken; Rahmen wie Windrad.'
+  };
+  push('info', 'Wirkprinzip der Verriegelung', lockInfo[O.V]);
+  return R;
+}
+
+/* ---------- Nesting ---------- */
+function mergeSpans(sp) {
+  if (sp.length < 2) return sp.map(s => s.slice());
+  sp.sort((u, v) => u[0] - v[0]);
+  const o = [sp[0].slice()];
+  for (let i = 1; i < sp.length; i++) { const l = o[o.length - 1]; if (sp[i][0] <= l[1] + 1) { if (sp[i][1] > l[1]) l[1] = sp[i][1]; } else o.push(sp[i].slice()); }
+  return o;
+}
+function rasterSpans(polys, cell, pad) {
+  let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+  polys.forEach(P => P.forEach(q => { minx = Math.min(minx, q[0]); maxx = Math.max(maxx, q[0]); miny = Math.min(miny, q[1]); maxy = Math.max(maxy, q[1]); }));
+  const ox = minx - pad * cell, oy = miny - pad * cell;
+  const W = Math.ceil((maxx - minx) / cell) + 2 * pad + 1, H = Math.ceil((maxy - miny) / cell) + 2 * pad + 1;
+  const rows = new Array(H);
+  for (let j = 0; j < H; j++) {
+    const yc = oy + (j + 0.5) * cell, sp = [];
+    for (const P of polys) {
+      const xs = [];
+      for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; if ((p[1] <= yc) !== (q[1] <= yc)) xs.push(p[0] + (yc - p[1]) * (q[0] - p[0]) / (q[1] - p[1])); }
+      xs.sort((u, v) => u - v);
+      for (let k = 0; k + 1 < xs.length; k += 2) { const i0 = Math.ceil((xs[k] - ox) / cell - 0.5), i1 = Math.floor((xs[k + 1] - ox) / cell - 0.5); if (i0 <= i1) sp.push([i0, i1]); }
+    }
+    rows[j] = mergeSpans(sp);
+  }
+  return { W, H, rows, ox, oy, bw: maxx - minx, bh: maxy - miny, pad, cell };
+}
+function dilateSpans(R, r) {
+  if (r <= 0) return R;
+  const rows = new Array(R.H);
+  for (let j = 0; j < R.H; j++) {
+    const sp = [];
+    for (let k = Math.max(0, j - r); k <= Math.min(R.H - 1, j + r); k++) R.rows[k].forEach(s => sp.push([s[0] - r, s[1] + r]));
+    rows[j] = mergeSpans(sp);
+  }
+  return { ...R, rows };
+}
+function forbidden(dil, plain) {
+  const H = plain.H, off = H - 1, forb = new Array(2 * H - 1);
+  for (let dy = -(H - 1); dy <= H - 1; dy++) {
+    const iv = [];
+    for (let j = Math.max(0, dy); j < Math.min(H, H + dy); j++) {
+      const ra = dil.rows[j], rb = plain.rows[j - dy];
+      if (!ra.length || !rb.length) continue;
+      for (const A of ra) for (const B of rb) iv.push([A[0] - B[1], A[1] - B[0]]);
+    }
+    forb[dy + off] = mergeSpans(iv);
+  }
+  const free = (dx, dy) => {
+    if (dy < -off || dy > off) return true;
+    const L = forb[dy + off]; let lo = 0, hi = L.length - 1;
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (dx < L[mid][0]) hi = mid - 1; else if (dx > L[mid][1]) lo = mid + 1; else return false; }
+    return true;
+  };
+  return { forb, off, free, H };
+}
+function bestLattice(F, W) {
+  const cand = [], seen = new Set();
+  const pushC = (x, y) => { if (y < 0 || (y === 0 && x <= 0)) return; const k = x + ',' + y; if (seen.has(k)) return; seen.add(k); if (F.free(x, y)) cand.push([x, y]); };
+  for (let dy = 0; dy <= F.off; dy++) { const L = F.forb[dy + F.off]; if (!L.length) pushC(0, dy); L.forEach(iv => { pushC(iv[0] - 1, dy); pushC(iv[1] + 1, dy); }); }
+  pushC(0, F.off + 1);
+  cand.sort((u, v) => (u[0] * u[0] + u[1] * u[1]) - (v[0] * v[0] + v[1] * v[1]));
+  const C = cand.slice(0, 260);
+  let best = null, bestDet = Infinity;
+  const valid = (A, B) => {
+    const mn = Math.min(Math.hypot(A[0], A[1]), Math.hypot(B[0], B[1]));
+    const N = Math.min(14, Math.ceil(2 * (W + F.H) / mn) + 1);
+    for (let n = 0; n <= N; n++) for (let m = -N; m <= N; m++) {
+      if (n === 0 && m <= 0) continue;
+      const x = n * A[0] + m * B[0], y = n * A[1] + m * B[1];
+      if (Math.abs(y) > F.off || Math.abs(x) > 3 * W) continue;
+      if (!F.free(x, y)) return false;
+    }
+    return true;
+  };
+  for (let i = 0; i < C.length; i++) for (let j = i + 1; j < C.length; j++) {
+    const A = C[i], B = C[j], det = Math.abs(A[0] * B[1] - A[1] * B[0]);
+    if (det === 0 || det >= bestDet) continue;
+    if (valid(A, B)) { best = [A, B]; bestDet = det; }
+  }
+  return best ? { a: best[0], b: best[1], det: bestDet } : null;
+}
+function nest(O, sheet, opt = {}) {
+  const t0 = Date.now();
+  const base = O.panels.map(p => p.poly.map(q => [q[0], -q[1]]));
+  const ext = Math.max(O.bbox.w, O.bbox.h);
+  const cell = opt.cell || clamp(ext / 240, 0.6, 2.5);
+  const rs = Math.ceil((+sheet.spacing || 0) / cell), pad = rs + 3;
+  const UW = sheet.W - 2 * sheet.margin, UH = sheet.H - 2 * sheet.margin;
+  const rot = (P, k) => P.map(q => { let x = q[0], y = q[1]; for (let i = 0; i < k; i++) { const nx = -y; y = x; x = nx; } return [x, y]; });
+  const shapes = [0, 1, 2, 3].map(k => {
+    const plain = dilateSpans(rasterSpans(base.map(P => rot(P, k)), cell, pad), 1);
+    const dil = dilateSpans(plain, rs);
+    const pxMin = -pad, pxMax = Math.floor((UW - plain.bw) / cell) - pad, pyMin = -pad, pyMax = Math.floor((UH - plain.bh) / cell) - pad;
+    return { k, plain, dil, pxMin, pxMax, pyMin, pyMax, fits: pxMax >= pxMin && pyMax >= pyMin };
+  });
+  const OFF = pad + 4, GW = Math.ceil(UW / cell) + 2 * OFF + 4, GH = Math.ceil(UH / cell) + 2 * OFF + 4;
+  function Grid() {
+    const occ = new Uint8Array(GW * GH), pre = new Int32Array((GW + 1) * GH);
+    const rebuild = r => { let s = 0, b0 = r * (GW + 1), o = r * GW; pre[b0] = 0; for (let x = 0; x < GW; x++) { s += occ[o + x]; pre[b0 + x + 1] = s; } };
+    return {
+      mark(sh, px, py) {
+        const R = sh.plain;
+        for (let j = 0; j < R.H; j++) { const gy = py + j + OFF; if (gy < 0 || gy >= GH || !R.rows[j].length) continue; for (const s of R.rows[j]) for (let x = Math.max(0, px + s[0] + OFF); x <= Math.min(GW - 1, px + s[1] + OFF); x++) occ[gy * GW + x] = 1; rebuild(gy); }
+      },
+      fits(sh, px, py) {
+        const R = sh.dil;
+        for (let j = 0; j < R.H; j++) {
+          const gy = py + j + OFF; if (gy < 0 || gy >= GH) continue;
+          const b0 = gy * (GW + 1);
+          for (const s of R.rows[j]) { const x0 = Math.max(0, px + s[0] + OFF), x1 = Math.min(GW - 1, px + s[1] + OFF); if (x0 <= x1 && pre[b0 + x1 + 1] - pre[b0 + x0] > 0) return false; }
+        }
+        return true;
+      }
+    };
+  }
+  function greedyFill(G, list, order = 'row', rots = [0, 1, 2, 3]) {
+    const shs = rots.map(k => shapes[k]).filter(s => s.fits);
+    if (!shs.length) return list;
+    const ys = Math.min(...shs.map(s => s.pyMin)), ye = Math.max(...shs.map(s => s.pyMax));
+    const xs = Math.min(...shs.map(s => s.pxMin)), xe = Math.max(...shs.map(s => s.pxMax));
+    const tryAt = (px, py) => {
+      for (const sh of shs) {
+        if (px < sh.pxMin || px > sh.pxMax || py < sh.pyMin || py > sh.pyMax) continue;
+        if (G.fits(sh, px, py)) { G.mark(sh, px, py); list.push({ k: sh.k, px, py }); return; }
+      }
+    };
+    if (order === 'row') { for (let py = ys; py <= ye; py++) for (let px = xs; px <= xe; px++) tryAt(px, py); }
+    else { for (let px = xs; px <= xe; px++) for (let py = ys; py <= ye; py++) tryAt(px, py); }
+    return list;
+  }
+  function latticeFill(sh, L) {
+    const a = L.a, b = L.b, det = a[0] * b[1] - a[1] * b[0];
+    let best = [];
+    const S = 8;
+    for (let u = 0; u < S; u++) for (let v = 0; v < S; v++) {
+      const ox = sh.pxMin + Math.round((u * a[0] + v * b[0]) / S), oy = sh.pyMin + Math.round((u * a[1] + v * b[1]) / S);
+      let nmin = Infinity, nmax = -Infinity, mmin = Infinity, mmax = -Infinity;
+      for (const [x, y] of [[sh.pxMin, sh.pyMin], [sh.pxMax, sh.pyMin], [sh.pxMin, sh.pyMax], [sh.pxMax, sh.pyMax]]) {
+        const n = ((x - ox) * b[1] - (y - oy) * b[0]) / det, m = (a[0] * (y - oy) - a[1] * (x - ox)) / det;
+        nmin = Math.min(nmin, n); nmax = Math.max(nmax, n); mmin = Math.min(mmin, m); mmax = Math.max(mmax, m);
+      }
+      const pts = [];
+      for (let n = Math.floor(nmin) - 1; n <= Math.ceil(nmax) + 1; n++) for (let m = Math.floor(mmin) - 1; m <= Math.ceil(mmax) + 1; m++) {
+        const px = ox + n * a[0] + m * b[0], py = oy + n * a[1] + m * b[1];
+        if (px >= sh.pxMin && px <= sh.pxMax && py >= sh.pyMin && py <= sh.pyMax) pts.push({ k: sh.k, px, py });
+      }
+      if (pts.length > best.length) best = pts;
+    }
+    return best;
+  }
+  const results = [];
+  let latDensity = null, lattice = null;
+  for (const k of [0, 1]) {
+    const sh = shapes[k];
+    const F = forbidden(sh.dil, sh.plain);
+    const L = bestLattice(F, sh.plain.W);
+    if (!L) continue;
+    const dens = O.area / (L.det * cell * cell);
+    if (k === 0 || dens > latDensity) { latDensity = dens; lattice = { ...L, k }; }
+    if (!sh.fits) continue;
+    const G = Grid(), list = latticeFill(sh, L);
+    list.forEach(p => G.mark(sh, p.px, p.py));
+    const nLat = list.length;
+    greedyFill(G, list);
+    results.push({ list, method: `Gitter (${k ? 90 : 0}°) + Auffüllen`, nLat });
+  }
+  // Bottom-Left-Fill: zeilen- und spaltenweise, mit allen bzw. nur paarweisen Drehlagen
+  // (spaltenweise findet z. B. Zickzack-Reihen ineinandergreifender Kreuze)
+  for (const order of ['row', 'col']) for (const rots of [[0, 1, 2, 3], [0, 2], [1, 3]]) {
+    const G = Grid(), list = []; greedyFill(G, list, order, rots);
+    results.push({ list, method: `Bottom-Left-Fill (${order === 'row' ? 'zeilen' : 'spalten'}weise, ${rots.map(r => r * 90 + '°').join('/')})`, nLat: 0 });
+  }
+  results.sort((u, v) => v.list.length - u.list.length);
+  const R = results[0];
+  const n = R.list.length, sheetA = sheet.W * sheet.H;
+  return {
+    cell, shapes, placements: R.list, method: R.method, n, sheet,
+    util: n * O.area / sheetA, waste: 1 - n * O.area / sheetA, latDensity: Math.min(1, latticeDensityClamp(latDensity)), lattice,
+    ms: Date.now() - t0,
+    transform(pl) {
+      const sh = shapes[pl.k];
+      const dx = sheet.margin + pl.px * cell - sh.plain.ox, dy = sheet.margin + pl.py * cell - sh.plain.oy;
+      return q => { let x = q[0], y = -q[1]; for (let i = 0; i < pl.k; i++) { const nx = -y; y = x; x = nx; } return [x + dx, y + dy]; };
+    }
+  };
+}
+function latticeDensityClamp(d) { return d == null ? 0 : d; }
+
+/* ---------- SVG-Export ---------- */
+function fmt(v) { return (Math.round(v * 1000) / 1000).toString(); }
+function perfDashes(seg, cut, gap) {
+  const [p, q] = seg, L = V2.len(V2.sub(q, p)), u = V2.mul(V2.sub(q, p), 1 / L), out = [];
+  const n = Math.max(1, Math.round((L - cut) / (cut + gap)) + 1), step = n > 1 ? (L - cut) / (n - 1) : 0;
+  const c = Math.min(cut, L * 0.9);
+  for (let i = 0; i < n; i++) { const s = n > 1 ? i * step : (L - c) / 2; out.push([V2.add(p, V2.mul(u, s)), V2.add(p, V2.mul(u, s + c))]); }
+  return out;
+}
+function svgDoc(W, H, cutLines, foldSegs, infoEls, opt) {
+  const pl = l => `<path d="M${l.map(p => fmt(p[0]) + ' ' + fmt(p[1])).join(' L')}"/>`;
+  const fold = opt.foldStyle === 'perf'
+    ? foldSegs.flatMap(s => perfDashes(s, opt.perfCut, opt.perfGap)).map(s => pl(s)).join('\n')
+    : foldSegs.map(s => pl(s)).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${fmt(W)}mm" height="${fmt(H)}mm" viewBox="0 0 ${fmt(W)} ${fmt(H)}">
+<!-- Rahmenbox ${opt.title} · Masstab 1:1 (1 Einheit = 1 mm) -->
+<g id="schnitt" inkscape:groupmode="layer" inkscape:label="Schnitt" fill="none" stroke="#FF0000" stroke-width="0.1">
+${cutLines.map(pl).join('\n')}
+</g>
+<g id="falz" inkscape:groupmode="layer" inkscape:label="${opt.foldStyle === 'perf' ? 'Falz (Perforation – schneiden)' : 'Falz (rillen)'}" fill="none" stroke="#0000FF" stroke-width="0.1">
+${fold}
+</g>
+<g id="info" inkscape:groupmode="layer" inkscape:label="Info (nicht schneiden)" fill="none" stroke="#00A000" stroke-width="0.1">
+${infoEls || ''}
+</g>
+</svg>`;
+}
+function pieceSVG(O, opt) {
+  const M = 5, bb = O.bbox, W = bb.w + 2 * M, H = bb.h + 2 * M;
+  const T = q => [q[0] - bb.minx + M, bb.maxy - q[1] + M];
+  return svgDoc(W, H, O.cutPolylines.map(l => l.map(T)), O.folds.map(s => s.map(T)), '', { ...opt, title: `${VARIANTS[O.V].short} X${O.X} Y${O.Y} Z${O.Z} w${O.w}` });
+}
+function sheetSVG(O, N, opt) {
+  const cuts = [], folds = [];
+  N.placements.forEach(pl => { const T = N.transform(pl); O.cutPolylines.forEach(l => cuts.push(l.map(T))); O.folds.forEach(s => folds.push(s.map(T))); });
+  const info = `<rect x="0" y="0" width="${fmt(N.sheet.W)}" height="${fmt(N.sheet.H)}"/>`;
+  return svgDoc(N.sheet.W, N.sheet.H, cuts, folds, info, { ...opt, title: `${VARIANTS[O.V].short} Bogen ${N.n} Stück` });
+}
+
+/* Export für Node-Tests */
+if (typeof module !== 'undefined') module.exports = { build, verify, nest, worldPolys, pieceSVG, sheetSVG, VARIANTS, QUAL, paperSuit, MATERIALS };
+
+/* =====================================================================
+   OBERFLÄCHE
+   ===================================================================== */
+if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', function () {
+  const $ = id => document.getElementById(id);
+  const S = {
+    variant: 'windrad', X: 60, Y: 80, Z: 35, w: 10, material: 'karton250', t: 0.30, gsm: 250, tuck: true, tuckD: 0,
+    sheetPreset: 'a4', sheetW: 297, sheetH: 210, margin: 5, spacing: 2, foldStyle: 'layer', perfCut: 2, perfGap: 1
+  };
+  try { const sv = JSON.parse(localStorage.getItem('rahmenbox') || 'null'); if (sv) Object.assign(S, sv); } catch (e) { }
+  let O = null, N = null, nestTimer = null, view = { yaw: -0.55, pitch: 0.42 }, foldT = null, playing = false;
+
+  // Selects befüllen
+  for (const k in VARIANTS) $('variant').add(new Option(VARIANTS[k].name, k));
+  for (const k in MATERIALS) $('material').add(new Option(MATERIALS[k].name, k));
+  for (const k in SHEETS) $('sheetPreset').add(new Option(SHEETS[k].name, k));
+  const fields = ['variant', 'X', 'Y', 'Z', 'w', 'material', 't', 'gsm', 'tuckD', 'sheetPreset', 'sheetW', 'sheetH', 'margin', 'spacing', 'foldStyle', 'perfCut', 'perfGap'];
+  function toUI() {
+    fields.forEach(f => { $(f).value = S[f]; });
+    $('tuck').checked = !!S.tuck;
+    ['X', 'Y', 'Z', 'w'].forEach(f => { $(f + 'r').value = S[f]; });
+    $('variantDesc').textContent = VARIANTS[S.variant].desc;
+    $('tuck').disabled = S.variant === 'faltecke'; $('tuckD').disabled = S.variant === 'faltecke' || !S.tuck;
+  }
+  function onInput(e) {
+    const id = e.target.id;
+    if (id.endsWith('r') && ['Xr', 'Yr', 'Zr', 'wr'].includes(id)) S[id[0]] = +e.target.value;
+    else if (id === 'tuck') S.tuck = e.target.checked;
+    else if (['variant', 'material', 'sheetPreset', 'foldStyle'].includes(id)) S[id] = e.target.value;
+    else S[id] = +e.target.value;
+    if (id === 'material' && MATERIALS[S.material].t) { S.t = MATERIALS[S.material].t; S.gsm = MATERIALS[S.material].gsm; }
+    if (id === 't' || id === 'gsm') S.material = 'custom';
+    if (id === 'sheetPreset' && SHEETS[S.sheetPreset].W) { S.sheetW = SHEETS[S.sheetPreset].W; S.sheetH = SHEETS[S.sheetPreset].H; }
+    if (id === 'sheetW' || id === 'sheetH') S.sheetPreset = 'custom';
+    ['X', 'Y'].forEach(f => { S[f] = clamp(S[f], 20, 90); }); S.Z = clamp(S.Z, 10, 90);
+    toUI(); update(id);
+  }
+  document.querySelectorAll('aside input, aside select').forEach(el => el.addEventListener('input', onInput));
+
+  // Tabs
+  let tab = 'net';
+  $('tabs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    tab = b.dataset.t;
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + tab));
+    if (tab === 'fold') draw3D();
+    if (tab === 'nest' && !N) scheduleNest(0);
+    if (tab === 'guide') drawGuide();
+    if (tab === 'compare' && !$('compare').innerHTML) runCompare();
+  });
+
+  function update(src) {
+    try { localStorage.setItem('rahmenbox', JSON.stringify(S)); } catch (e) { }
+    O = build(S);
+    $('openingHint').textContent = `Lichte Frontöffnung ≈ ${O.opening[0].toFixed(1)} × ${O.opening[1].toFixed(1)} mm · max. Rahmen ${O.wMax.toFixed(1)} mm`;
+    const fr = $('foldT'); fr.max = O.maxStep; if (foldT === null || foldT > O.maxStep || src === 'variant' || src === 'tuck') foldT = O.maxStep; fr.value = foldT;
+    drawNet(); drawStats(); drawChecks();
+    if (tab === 'fold') draw3D();
+    if (tab === 'guide') drawGuide();
+    N = null; scheduleNest(tab === 'nest' ? 120 : 600);
+    if (!['sheetW', 'sheetH', 'margin', 'spacing', 'sheetPreset', 'foldStyle', 'perfCut', 'perfGap'].includes(src)) $('compare').innerHTML = '';
+  }
+
+  /* --- Schnittmuster --- */
+  const KCOL = { back: '#efe6d6', wall: '#f3ecdf', frame: '#e9dcc4', tongue: '#f6c9a8', tab: '#f6c9a8', tuck: '#dfe9f3', gusset: '#e4efdc' };
+  function drawNet() {
+    const bb = O.bbox, M = 14, W = bb.w + 2 * M, H = bb.h + 2 * M;
+    const T = q => `${(q[0] - bb.minx + M).toFixed(3)},${(bb.maxy - q[1] + M).toFixed(3)}`;
+    let s = `<svg viewBox="0 0 ${W.toFixed(2)} ${H.toFixed(2)}" xmlns="http://www.w3.org/2000/svg" style="background:var(--panel)">`;
+    O.panels.forEach(p => { s += `<polygon points="${p.poly.map(T).join(' ')}" fill="${KCOL[p.kind]}" stroke="none"/>`; });
+    O.folds.forEach(f => { s += `<line x1="${T(f[0]).split(',')[0]}" y1="${T(f[0]).split(',')[1]}" x2="${T(f[1]).split(',')[0]}" y2="${T(f[1]).split(',')[1]}" stroke="var(--fold)" stroke-width="${(W / 900).toFixed(3)}" stroke-dasharray="${(W / 180).toFixed(2)} ${(W / 300).toFixed(2)}"/>`; });
+    O.cutPolylines.forEach(l => { s += `<polyline points="${l.map(T).join(' ')}" fill="none" stroke="var(--cut)" stroke-width="${(W / 600).toFixed(3)}" stroke-linejoin="round"/>`; });
+    // Beschriftung
+    const fs = clamp(Math.min(W, H) / 40, 3, 7);
+    const lab = (txt, q) => { const [x, y] = T(q).split(','); s += `<text x="${x}" y="${y}" font-size="${fs}" text-anchor="middle" dominant-baseline="middle" fill="var(--muted)" font-family="system-ui">${txt}</text>`; };
+    lab(`Rückwand ${O.X}×${O.Y}`, [0, 0]); lab('oben', [0, O.b + O.D / 2]); lab('unten', [0, -O.b - O.D / 2]);
+    lab('links', [-O.a - O.D / 2, 0]); lab('rechts', [O.a + O.D / 2, 0]);
+    // Gesamtmass
+    const y0 = H - 4, fsd = fs * 0.9;
+    s += `<text x="${W / 2}" y="${y0}" font-size="${fsd}" text-anchor="middle" fill="var(--ink)" font-family="system-ui">${O.bbox.w.toFixed(1)} mm</text>`;
+    s += `<text x="5" y="${H / 2}" font-size="${fsd}" text-anchor="middle" fill="var(--ink)" font-family="system-ui" transform="rotate(-90 5 ${H / 2})">${O.bbox.h.toFixed(1)} mm</text>`;
+    s += '</svg>';
+    $('netView').innerHTML = s;
+  }
+  function stat(v, l) { return `<div class="stat"><b>${v}</b><small>${l}</small></div>`; }
+  function drawStats() {
+    const bbA = O.bbox.w * O.bbox.h;
+    $('netStats').innerHTML = [
+      stat((O.area / 100).toFixed(1) + ' cm²', 'Material pro Box'),
+      stat(O.bbox.w.toFixed(0) + ' × ' + O.bbox.h.toFixed(0), 'Zuschnitt-Umriss mm'),
+      stat(((1 - O.area / bbA) * 100).toFixed(0) + ' %', 'Verschnitt im Einzel-Rechteck'),
+      stat(O.mass ? O.mass.toFixed(2) + ' g' : '–', `Masse (${S.gsm} g/m²)`),
+      stat((O.cutLen / 1000).toFixed(2) + ' m', 'Schnittlänge'),
+      stat((O.foldLen / 1000).toFixed(2) + ' m', 'Falzlänge'),
+      stat(O.opening[0].toFixed(0) + ' × ' + O.opening[1].toFixed(0), 'Frontöffnung mm'),
+      stat(N ? (N.waste * 100).toFixed(0) + ' %' : '…', 'Verschnitt auf Bogen')
+    ].join('');
+  }
+  function drawChecks() {
+    const R = verify(O), sym = { pass: '✓', warn: '!', fail: '✗', info: 'i' };
+    $('checks').innerHTML = R.map(r => `<li><span class="ic ${r.lvl}">${sym[r.lvl]}</span><span>${r.label}<div class="d">${r.detail}</div></span></li>`).join('');
+    $('protoList').innerHTML = [...PROTO[O.V], ...PROTO.common].map(x => `<li>${x}</li>`).join('');
+    const nFail = R.filter(r => r.lvl === 'fail').length, nWarn = R.filter(r => r.lvl === 'warn').length;
+    const btn = document.querySelector('#tabs button[data-t=check]');
+    btn.textContent = 'Prüfung ' + (nFail ? `✗${nFail}` : nWarn ? `!${nWarn}` : '✓');
+  }
+
+  /* --- 3D --- */
+  function render3D(cv, T, vw, hiStep) {
+    const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const WP = worldPolys(O, T, true);
+    const cy = Math.cos(vw.yaw), sy = Math.sin(vw.yaw), cp = Math.cos(vw.pitch), sp = Math.sin(vw.pitch);
+    const vp = p => { const x = p[0] * cy + p[2] * sy, z = -p[0] * sy + p[2] * cy, y = p[1]; return [x, y * cp - z * sp, y * sp + z * cp]; };
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    WP.forEach(w => w.pts.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); z0 = Math.min(z0, q[2]); z1 = Math.max(z1, q[2]); }));
+    const cx = (x0 + x1) / 2, cyy = (y0 + y1) / 2, cz = (z0 + z1) / 2, diag = Math.hypot(x1 - x0, y1 - y0, z1 - z0) || 1;
+    const sc = 0.9 * Math.min(W, H) / diag;
+    const mat = MATERIALS[S.material] || MATERIALS.custom;
+    const outer = hexToRgb(mat.color), inner = [250, 247, 240];
+    const faces = WP.map(w => {
+      const v = w.pts.map(q => vp([q[0] - cx, q[1] - cyy, q[2] - cz]));
+      const n = vp(w.n); let d = 0; v.forEach(q => { d += q[2]; });
+      return { v, n, d: d / v.length, p: w.p };
+    }).sort((A, B) => A.d - B.d);
+    const L = V2.nrm([0.4, 0.6]);
+    for (const f of faces) {
+      const innerSide = f.n[2] > 0;
+      let col = innerSide ? inner : outer;
+      const lam = 0.62 + 0.38 * Math.abs(f.n[0] * L[0] * 0.6 + f.n[1] * L[1] * 0.6 + f.n[2] * 0.8);
+      if (hiStep != null && f.p.step === hiStep && hiStep > 0) col = [Math.round(col[0] * 0.55 + 230 * 0.45), Math.round(col[1] * 0.55 + 110 * 0.45), Math.round(col[2] * 0.55 + 60 * 0.45)];
+      ctx.beginPath();
+      f.v.forEach((q, i) => { const X = W / 2 + q[0] * sc, Y = H / 2 - q[1] * sc; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+      ctx.closePath();
+      ctx.fillStyle = `rgb(${col.map(c => Math.round(c * lam)).join(',')})`;
+      ctx.fill(); ctx.strokeStyle = 'rgba(40,30,20,.45)'; ctx.lineWidth = 0.7; ctx.stroke();
+    }
+  }
+  function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function draw3D() {
+    render3D($('c3d'), foldT, view, null);
+    const st = Math.min(O.maxStep, Math.max(0, Math.ceil(foldT - 1e-6)));
+    const g = O.guide.slice().reverse().find(x => x.T <= st + 1e-9);
+    $('foldLabel').textContent = `Schritt ${foldT.toFixed(2)} / ${O.maxStep}` + (g ? ' · ' + g.title : '');
+  }
+  $('foldT').addEventListener('input', e => { foldT = +e.target.value; playing = false; $('play').textContent = '▶ Falten'; draw3D(); });
+  $('play').addEventListener('click', () => {
+    if (playing) { playing = false; $('play').textContent = '▶ Falten'; return; }
+    playing = true; $('play').textContent = '❚❚ Pause'; if (foldT >= O.maxStep - 1e-6) foldT = 0;
+    let last = performance.now();
+    const loop = now => { if (!playing) return; foldT = Math.min(O.maxStep, foldT + (now - last) / 900); last = now; $('foldT').value = foldT; draw3D(); if (foldT < O.maxStep) requestAnimationFrame(loop); else { playing = false; $('play').textContent = '▶ Falten'; } };
+    requestAnimationFrame(loop);
+  });
+  $('viewFront').onclick = () => { view = { yaw: 0, pitch: 0 }; draw3D(); };
+  $('viewIso').onclick = () => { view = { yaw: -0.55, pitch: 0.42 }; draw3D(); };
+  $('viewBack').onclick = () => { view = { yaw: Math.PI - 0.5, pitch: 0.35 }; draw3D(); };
+  (function () {
+    const cv = $('c3d'); let drag = null;
+    cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, view.yaw, view.pitch]; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
+    cv.addEventListener('pointermove', e => { if (!drag) return; view.yaw = drag[2] + (e.clientX - drag[0]) * 0.01; view.pitch = clamp(drag[3] + (e.clientY - drag[1]) * 0.01, -1.5, 1.5); draw3D(); });
+    cv.addEventListener('pointerup', () => { drag = null; cv.style.cursor = 'grab'; });
+    window.addEventListener('resize', () => { if (tab === 'fold') draw3D(); if (tab === 'guide') drawGuide(); });
+  })();
+
+  /* --- Anleitung --- */
+  function drawGuide() {
+    const el = $('guide');
+    el.innerHTML = O.guide.map((g, i) => `<div class="step"><canvas id="gs${i}"></canvas><h4>${i}. ${g.title}</h4><p>${g.text}</p></div>`).join('');
+    O.guide.forEach((g, i) => { const vw = i === O.guide.length - 1 ? { yaw: -0.35, pitch: 0.3 } : (g.T === 0 ? { yaw: 0, pitch: 0 } : { yaw: -0.55, pitch: 0.42 }); render3D($('gs' + i), g.T, vw, g.T); });
+  }
+
+  /* --- Nesting --- */
+  function sheetParams() { return { W: S.sheetW, H: S.sheetH, margin: S.margin, spacing: S.spacing }; }
+  function scheduleNest(ms) { clearTimeout(nestTimer); nestTimer = setTimeout(() => { if (!N) { $('nestView').innerHTML = '<p class="busy" style="padding:14px">Berechnung …</p>'; setTimeout(runNest, 20); } }, ms); }
+  function runNest() {
+    N = nest(O, sheetParams());
+    drawStats();
+    const sh = N.sheet;
+    let s = `<svg viewBox="-4 -4 ${sh.W + 8} ${sh.H + 8}" xmlns="http://www.w3.org/2000/svg">`;
+    s += `<rect x="0" y="0" width="${sh.W}" height="${sh.H}" fill="var(--bg)" stroke="var(--muted)" stroke-width="0.4"/>`;
+    s += `<rect x="${sh.margin}" y="${sh.margin}" width="${sh.W - 2 * sh.margin}" height="${sh.H - 2 * sh.margin}" fill="none" stroke="var(--line)" stroke-width="0.3" stroke-dasharray="3 2"/>`;
+    N.placements.forEach((pl, i) => {
+      const T = N.transform(pl);
+      O.panels.forEach(p => { s += `<polygon points="${p.poly.map(q => T(q).map(v => v.toFixed(2)).join(',')).join(' ')}" fill="${KCOL[p.kind]}"/>`; });
+      O.cutPolylines.forEach(l => { s += `<polyline points="${l.map(q => T(q).map(v => v.toFixed(2)).join(',')).join(' ')}" fill="none" stroke="var(--cut)" stroke-width="0.35"/>`; });
+      O.folds.forEach(f => { const A = T(f[0]), B = T(f[1]); s += `<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="var(--fold)" stroke-width="0.25" stroke-dasharray="2 1.2"/>`; });
+    });
+    s += '</svg>';
+    $('nestView').innerHTML = N.n ? s : '<p style="padding:14px">Der Zuschnitt passt nicht auf den Bogen. Bogen vergrössern oder Masse verkleinern.</p>';
+    const per = N.n ? (sh.W * sh.H / N.n / 100).toFixed(1) : '–';
+    $('nestStats').innerHTML = [
+      stat(N.n, 'Zuschnitte pro Bogen'),
+      stat((N.util * 100).toFixed(1) + ' %', 'Materialnutzung'),
+      stat((N.waste * 100).toFixed(1) + ' %', 'Verschnitt (ganzer Bogen)'),
+      stat(per + ' cm²', 'Bogenfläche pro Box'),
+      stat((N.latDensity * 100).toFixed(1) + ' %', 'Nutzung im Endlosgitter (Rolle)'),
+      stat(N.method, `Verfahren · Raster ${N.cell.toFixed(2)} mm · ${N.ms} ms`)
+    ].join('');
+  }
+
+  /* --- Vergleich --- */
+  function runCompare() {
+    $('compare').innerHTML = '<p class="busy">Berechne alle Varianten …</p>';
+    setTimeout(() => {
+      const rows = Object.keys(VARIANTS).map(v => {
+        const Ob = build({ ...S, variant: v });
+        const R = verify(Ob);
+        const Nb = nest(Ob, sheetParams(), { cell: clamp(Math.max(Ob.bbox.w, Ob.bbox.h) / 170, 0.8, 3) });
+        return { v, Ob, Nb, fails: R.filter(r => r.lvl === 'fail').length, warns: R.filter(r => r.lvl === 'warn').length };
+      });
+      const perBox = r => r.Nb.n ? S.sheetW * S.sheetH / r.Nb.n : Infinity;
+      const minPer = Math.min(...rows.map(perBox)), minArea = Math.min(...rows.map(r => r.Ob.area));
+      const weights = { mat: 0.30, stab: 0.15, mont: 0.10, versch: 0.15, papier: 0.15, aest: 0.15 };
+      rows.forEach(r => {
+        const q = QUAL[r.v];
+        r.mat = isFinite(perBox(r)) ? 5 * (0.5 * minPer / perBox(r) + 0.5 * minArea / r.Ob.area) : 0;
+        r.papier = paperSuit(r.v, S.t);
+        r.score = weights.mat * r.mat + weights.stab * q.stab + weights.mont * q.mont + weights.versch * q.versch + weights.papier * r.papier + weights.aest * q.aest;
+      });
+      const best = rows.reduce((A, B) => B.score > A.score ? B : A);
+      const dots = n => '●'.repeat(Math.round(n)) + '○'.repeat(5 - Math.round(n));
+      let h = `<div style="overflow-x:auto"><table><thead><tr><th>Variante</th><th>Material cm²</th><th>Umriss mm</th><th>Stück/Bogen</th><th>Verschnitt Bogen</th><th>Nutzung Rolle</th><th>Schnitt m</th><th>Stabilität</th><th>Montage</th><th>Verschluss</th><th>Wieder&shy;verschluss</th><th>Eignung t=${S.t}</th><th>Ästhetik</th><th>Prüfung</th><th>Gesamt</th></tr></thead><tbody>`;
+      rows.forEach(r => {
+        const q = QUAL[r.v];
+        h += `<tr class="${r === best ? 'sel' : ''}"><td><b>${VARIANTS[r.v].name}</b></td>
+          <td class="num">${(r.Ob.area / 100).toFixed(1)}</td><td class="num">${r.Ob.bbox.w.toFixed(0)}×${r.Ob.bbox.h.toFixed(0)}</td>
+          <td class="num">${r.Nb.n}</td><td class="num">${(r.Nb.waste * 100).toFixed(0)} %</td><td class="num">${(r.Nb.latDensity * 100).toFixed(0)} %</td>
+          <td class="num">${(r.Ob.cutLen / 1000).toFixed(2)}</td>
+          <td class="dots">${dots(q.stab)}</td><td class="dots">${dots(q.mont)}</td><td class="dots">${dots(q.versch)}</td><td class="dots">${dots(q.wieder)}</td><td class="dots">${dots(r.papier)}</td><td class="dots">${dots(q.aest)}</td>
+          <td>${r.fails ? '✗ ' + r.fails : r.warns ? '! ' + r.warns : '✓'}</td><td class="num"><b>${r.score.toFixed(2)}</b></td></tr>`;
+      });
+      h += '</tbody></table></div>';
+      h += `<p class="hint">Gewichtung: Material (Fläche + Bogenausnutzung) 30 %, Stabilität 15 %, Montage 10 %, Verschluss 15 %, Materialeignung 15 %, Ästhetik 15 %. Material, Verschnitt und Prüfung sind für die aktuellen Masse berechnet; Stabilität, Montage, Verschluss und Ästhetik sind konstruktive Einschätzungen (Begründung im Tab „Recherche &amp; Konzepte“) und müssen am Prototyp bestätigt werden.</p>`;
+      h += `<p><b>Empfehlung für ${S.X}×${S.Y}×${S.Z} mm, ${MATERIALS[S.material].name}:</b> ${VARIANTS[best.v].name}.</p>`;
+      $('compare').innerHTML = h;
+      $('cmpInfo').textContent = `Bogen ${S.sheetW}×${S.sheetH} mm, Abstand ${S.spacing} mm`;
+    }, 30);
+  }
+  $('runCompare').onclick = runCompare;
+
+  /* --- Export --- */
+  function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  const exOpt = () => ({ foldStyle: S.foldStyle, perfCut: S.perfCut, perfGap: S.perfGap });
+  const base = () => `rahmenbox_${S.variant}_${S.X}x${S.Y}x${S.Z}_w${S.w}`;
+  $('expPiece').onclick = () => download(base() + '.svg', pieceSVG(O, exOpt()), 'image/svg+xml');
+  $('expSheet').onclick = () => { if (!N) N = nest(O, sheetParams()); download(base() + `_bogen${S.sheetW}x${S.sheetH}_${N.n}stk.svg`, sheetSVG(O, N, exOpt()), 'image/svg+xml'); };
+  $('expJson').onclick = () => download(base() + '.json', JSON.stringify({ parameter: S, flaeche_mm2: O.area, umriss_mm: [O.bbox.w, O.bbox.h], schnitt_mm: O.cutLen, falz_mm: O.foldLen, oeffnung_mm: O.opening }, null, 2), 'application/json');
+
+  $('research').innerHTML = document.getElementById('researchTpl').innerHTML;
+  toUI(); update('init');
+});
+</script>
+
+<template id="researchTpl">
+<h2>1 · Recherche: Bestehende Prinzipien</h2>
+<p>Zusammenfassung aus Verpackungstechnik, Origami und Kirigami (Fachwissen, keine Live-Quellen; Details im README).</p>
+<h3>Selbstarretierende Faltmechanismen</h3>
+<ul>
+<li><b>Steckdeckel / Tuck-End</b> (Faltschachteln, FEFCO-Gruppe 02/04): Einstecklasche mit Staublaschen; Reibschluss, robust, aber grosse Lasche.</li>
+<li><b>Crash-Lock- und Snap-Lock-Boden</b>: Sich gegenseitig hintergreifende Bodenlaschen, Riegelwirkung durch Geometrie.</li>
+<li><b>Masu-Box</b> (Origami): Eckquadrate werden als Dreiecke eingefaltet (Gusset) und durch umgelegte Ränder gesperrt – ohne Schnitt, aber mehrlagig.</li>
+<li><b>Mailer-Box FEFCO 0427</b>: Einteilig, Seitenwände doppelt eingerollt, Verriegelung über Zungen in Schlitzen.</li>
+</ul>
+<h3>Steck- und Hakenverbindungen</h3>
+<ul><li><b>Tab-and-Slot / Pfeillasche</b>: Lasche mit Widerhaken durch Schlitz; Formschluss in alle Richtungen, Halt abhängig von Kartonsteifigkeit.</li>
+<li><b>Hook-Lock</b> (Hakenschloss): Gegenläufige Schlitze, die sich ineinander einhaken.</li></ul>
+<h3>Puzzle- und Interlock-Verschlüsse</h3>
+<ul><li><b>Puzzle-Hinterschnitt</b>: Formschluss in der Ebene; verlangt Materialdicke für den Halt senkrecht zur Ebene.</li>
+<li><b>Gewebte Verbindung</b> (Über-Unter): bekannt aus Korb- und Papierflechten, auch bei Kirigami-Verbindern.</li></ul>
+<h3>Windradverschlüsse</h3>
+<ul><li><b>Twist-/Pinwheel-Verschluss</b>: Vier Laschen greifen zyklisch untereinander (z. B. Faltschachtel-Deckel, Origami-Umschläge). Kein Kleber, nur Reibung und zyklische Sperre; die letzte Lasche wird eingeschoben.</li></ul>
+<h3>Nesting und Bogenausnutzung</h3>
+<ul><li><b>Ineinandergreifende Nutzen</b>: Kreuzförmige Zuschnitte werden versetzt (Gitter mit Scherung) statt im Rechteckraster angeordnet.</li>
+<li><b>Common-Line-Cutting</b>: Gemeinsame Schnittlinien benachbarter Nutzen; spart Schnittweg und Steg, braucht Abstand 0.</li>
+<li><b>Rollenware</b>: Bei endloser Bahn entscheidet die Gitterdichte; beim Einzelbogen kommen Randverluste hinzu.</li></ul>
+
+<h2>2 · Grundkonstruktion (allen Varianten gemeinsam)</h2>
+<p>Kreuzförmiger Zuschnitt: Rückwand in der Mitte, vier Wände daran, an jeder Wand eine trapezförmige Rahmenlasche mit 45°-Gehrungen. Die Frontöffnung entsteht, weil die Trapeze nicht bis zur Mitte reichen – nichts wird herausgeschnitten, die Ecken des Kreuzes sind ohnehin frei. Der Rahmen ist einlagig, keine Doppelwand. Die obere Wand dient beim Öffnen als Deckel, der an der Rückwand angelenkt ist.</p>
+<p><b>Materialstärke:</b> Mittelflächenmodell – Rückwand und Wände erhalten die Zugabe t, die Seitenwände sind um t verkürzt, damit die Eckzungen innen an Ober- und Unterwand liegen. Gehrungsfuge g = max(0.25, 0.8·t).</p>
+
+<h2>3 · Fünf Lösungsansätze</h2>
+<h3>A · Windrad-Gehrung</h3>
+<p>Je eine Zunge an einer Gehrung, zyklisch unter die nächste Lasche. <b>+</b> kleinster Materialzusatz, einfach. <b>−</b> sperrt nur senkrecht zur Front; die letzte Zunge braucht biegsames Material. Ideal für Packpapier/Kraftpapier.</p>
+<h3>B · Verschränkte Gehrung (Webecke)</h3>
+<p>Jede Gehrung zweigeteilt: aussen liegt die Seitenlasche unter, innen die Deckellasche. Jede Ecke sperrt für sich. <b>+</b> Ecken unabhängig, Deckel separat zu öffnen. <b>−</b> vier Einfädelvorgänge.</p>
+<h3>C · Puzzle-Gehrung</h3>
+<p>Hinterschnittener Knopf in der Gehrung. <b>+</b> Formschluss in der Ebene (verhindert Aufspreizen der Wände), sichtbare Konstruktion als Gestaltungsmerkmal. <b>−</b> senkrecht nur Klemmung; in dünnem Papier unzuverlässig.</p>
+<h3>D · Pfeillasche &amp; Schlitz</h3>
+<p>Pfeil an der Gehrung der Deckel-/Bodenlasche durch einen Schlitz in der Seitenlasche. <b>+</b> sperrt in allen Richtungen, zuverlässigster Verschluss. <b>−</b> Schlitze sichtbar, Widerhaken nutzen sich ab, braucht w ≥ ca. 10 mm und Karton.</p>
+<h3>E · Origami-Faltecke + Windrad</h3>
+<p>Eckquadrate bleiben stehen und werden als Gusset nach innen gelegt (Masu-Prinzip). <b>+</b> geschlossene, schubsteife Ecken, fast rechteckiger Zuschnitt (wenig Verschnitt im Einzelrechteck). <b>−</b> deutlich mehr Material und Mehrlagigkeit; das Flachliegen der Faltecken ohne Kleber muss erprobt werden.</p>
+<p>Optional bei A–D: <b>Eckzungen</b> an den Seitenwänden (liegen in den sonst leeren Ecken des Kreuzes, also fast ohne Mehrverschnitt). Abschaltbar für minimalen Materialeinsatz.</p>
+
+<h2>4 · Bewertung (Kurzfassung)</h2>
+<ul>
+<li><b>Material:</b> A ≈ B ≈ C ≈ D (Unterschiede &lt; 3 %), E +40–80 %. Beim Nesting zählt vor allem, wie gut die Kreuze ineinandergreifen – das zeigt der Tab „Variantenvergleich“ mit echten Zahlen für die gewählten Masse.</li>
+<li><b>Stabilität &amp; Verschluss:</b> D &gt; B ≈ E &gt; A ≈ C.</li>
+<li><b>Montage:</b> A ≈ C &gt; D &gt; B ≈ E.</li>
+<li><b>Dünnes Packpapier:</b> A, B, E. <b>Karton 0.25–0.5 mm:</b> D, C, A.</li>
+<li><b>Ästhetik:</b> C (Puzzle als Ornament), A/B (saubere Gehrung, Zungen verdeckt), D (Schlitze sichtbar).</li>
+</ul>
+<p><b>Empfehlung:</b> Packpapier → <b>A Windrad</b>; Karton → <b>D Pfeillasche</b> (Funktion) oder <b>C Puzzle</b> (Gestaltung).</p>
+</template>
+</body>
+</html>
