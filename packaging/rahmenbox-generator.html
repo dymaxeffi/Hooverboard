@@ -91,10 +91,10 @@ tr.sel td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
   </fieldset>
   <fieldset>
     <legend>Innenmasse Produkt</legend>
-    <label class="row">X Breite<input type="range" id="Xr" min="20" max="90" step="1"><input type="number" id="X" min="20" max="90" step="0.5"></label>
-    <label class="row">Y Höhe<input type="range" id="Yr" min="20" max="90" step="1"><input type="number" id="Y" min="20" max="90" step="0.5"></label>
+    <label class="row">X Breite<input type="range" id="Xr" min="20" max="200" step="1"><input type="number" id="X" min="20" max="200" step="0.5"></label>
+    <label class="row">Y Höhe<input type="range" id="Yr" min="20" max="200" step="1"><input type="number" id="Y" min="20" max="200" step="0.5"></label>
     <label class="row">Z Tiefe<input type="range" id="Zr" min="10" max="90" step="1"><input type="number" id="Z" min="10" max="90" step="0.5"></label>
-    <label class="row">Rahmen w<input type="range" id="wr" min="4" max="30" step="0.5"><input type="number" id="w" min="4" max="40" step="0.5"></label>
+    <label class="row">Rahmen w<input type="range" id="wr" min="4" max="50" step="0.5"><input type="number" id="w" min="4" max="60" step="0.5"></label>
     <p class="hint" id="openingHint"></p>
   </fieldset>
   <fieldset>
@@ -270,6 +270,8 @@ const SHEETS = {
   a4: { name: 'A4 quer 297×210', W: 297, H: 210 },
   mat12: { name: 'Schneidematte 12″ 305×305', W: 305, H: 305 },
   a3: { name: 'A3 quer 420×297', W: 420, H: 297 },
+  a2: { name: 'A2 quer 594×420', W: 594, H: 420 },
+  a1: { name: 'A1 quer 841×594', W: 841, H: 594 },
   custom: { name: 'Eigene Grösse', W: null, H: null }
 };
 const QUAL = { // qualitative Einschätzung 1..5 (Begründung in der Recherche)
@@ -648,8 +650,8 @@ function verify(O) {
   const push = (lvl, label, detail) => R.push({ lvl, label, detail });
   const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2);
   // Parameter
-  if (O.X > 90 || O.Y > 90 || O.Z > 90) push('fail', 'Maximalmass 90 mm überschritten', `X ${O.X}, Y ${O.Y}, Z ${O.Z}`);
-  else push('pass', 'Innenmasse innerhalb 90 mm', `${O.X} × ${O.Y} × ${O.Z} mm (Innenraum, Mittelflächenmodell mit Falzzugabe t = ${O.t} mm)`);
+  if (O.X > 200 || O.Y > 200 || O.Z > 90) push('fail', 'Maximalmass überschritten (X, Y ≤ 200 mm, Z ≤ 90 mm)', `X ${O.X}, Y ${O.Y}, Z ${O.Z}`);
+  else push('pass', 'Innenmasse im zulässigen Bereich (X, Y ≤ 200 mm, Z ≤ 90 mm)', `${O.X} × ${O.Y} × ${O.Z} mm (Innenraum, Mittelflächenmodell mit Falzzugabe t = ${O.t} mm)`);
   if (O.wReq > O.wMax + 1e-9) push('warn', 'Rahmenbreite begrenzt', `angefragt ${O.wReq} mm, verwendet ${f1(O.w)} mm (max. = min(X,Y)/2 − 3)`);
   push(O.opening[0] > 4 && O.opening[1] > 4 ? 'pass' : 'fail', 'Frontöffnung durch Zuschnittgeometrie', `lichte Öffnung ≈ ${f1(O.opening[0])} × ${f1(O.opening[1])} mm – keine Fläche wird herausgeschnitten, die Öffnung entsteht zwischen den Trapezlaschen.`);
 
@@ -671,7 +673,7 @@ function verify(O) {
     const frames = WP.filter(w => w.p.kind === 'frame');
     let dzmax = 0; frames.forEach(w => w.pts.forEach(q => { dzmax = Math.max(dzmax, Math.abs(q[2] - O.D)); }));
     push(dzmax < 1e-6 ? 'pass' : 'fail', 'Rahmenlaschen liegen in der Frontebene', `max. Abweichung ${dzmax.toExponential(1)} mm (aus Falzrotation berechnet)`);
-    const cell = 0.08, box = { minx: -O.a - 1.0173, maxx: O.a + 1, miny: -O.b - 1.0291, maxy: O.b + 1 };
+    const cell = Math.max(0.08, 2 * Math.max(O.a, O.b) / 1500), box = { minx: -O.a - 1.0173, maxx: O.a + 1, miny: -O.b - 1.0291, maxy: O.b + 1 };
     const W = Math.ceil((box.maxx - box.minx) / cell), H = Math.ceil((box.maxy - box.miny) / cell);
     const grid = new Uint16Array(W * H);
     rasterCount(frames.map(w => w.pts.map(q => [q[0], q[1]])), box, cell, grid);
@@ -1023,7 +1025,7 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
     if (id === 't' || id === 'gsm') S.material = 'custom';
     if (id === 'sheetPreset' && SHEETS[S.sheetPreset].W) { S.sheetW = SHEETS[S.sheetPreset].W; S.sheetH = SHEETS[S.sheetPreset].H; }
     if (id === 'sheetW' || id === 'sheetH') S.sheetPreset = 'custom';
-    ['X', 'Y'].forEach(f => { S[f] = clamp(S[f], 20, 90); }); S.Z = clamp(S.Z, 10, 90);
+    ['X', 'Y'].forEach(f => { S[f] = clamp(S[f], 20, 200); }); S.Z = clamp(S.Z, 10, 90);
     toUI(); update(id);
   }
   document.querySelectorAll('aside input, aside select').forEach(el => el.addEventListener('input', onInput));

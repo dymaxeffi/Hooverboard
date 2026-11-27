@@ -1,6 +1,6 @@
 # Rahmenbox – parametrische, materialsparende Faltverpackung
 
-Einteilige, klebstofffreie Verpackung aus Packpapier oder dünnem Karton für kleine Designobjekte (max. 90 × 90 × 90 mm).
+Einteilige, klebstofffreie Verpackung aus Packpapier oder dünnem Karton für kleine Designobjekte (X und Y bis 200 mm, Z bis 90 mm).
 Rückwand und vier Seitenwände sind geschlossen. Die Front ist ein umlaufender Rahmen mit Gehrungsecken. Das Produkt bleibt durch die Öffnung sichtbar, und der Rahmen ist zugleich der Verschluss.
 
 > Nebenprojekt im Repository. Es hat keinen Bezug zum Hoverboard und keine Abhängigkeiten zum übrigen Code.
